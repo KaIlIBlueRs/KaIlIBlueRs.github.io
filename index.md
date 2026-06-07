@@ -8,7 +8,7 @@ profile_picture:
 <b>About Me:</b>
 
 Hi! I'm an incoming Ph.D. student at the <a href="https://www.business.rutgers.edu/marketing">Department of Marketing, Rutgers Business School</a>.
-Prior to that, I obtained my Bachelor of Science in Statistics and Data Science from the <a href="https://www.fdsm.fudan.edu.cn/aboutus/default.html">School of Management</a> at <a href="https://www.fudan.edu.cn/">Fudan University</a>.
+Prior to that, I obtained my Master of Science in Statistics and Data Science from <a href="https://statistics.northwestern.edu/">Northwestern University</a>, and my Bachelor of Science in Statistics and Data Science from the <a href="https://www.fdsm.fudan.edu.cn/aboutus/default.html">School of Management</a> at <a href="https://www.fudan.edu.cn/">Fudan University</a>.
 </p>
 
 <p>
@@ -30,7 +30,8 @@ To be updated as I begin my Ph.D. journey. If you'd like to chat, feel free to r
 <h5> Education </h5>
 <ul>
 <li>Ph.D. in Marketing, Rutgers Business School, 2026.9 - Present.</li>
-<li>B.S. in Statistics and Data Science, Fudan University, 2022.9 - 2026.6.</li>
+<li>M.S. in Statistics and Data Science, Northwestern University, 2024.9 - 2026.6.</li>
+<li>B.S. in Statistics and Data Science, Fudan University, 2020.9 - 2024.6.</li>
 </ul>
 </div>
 
