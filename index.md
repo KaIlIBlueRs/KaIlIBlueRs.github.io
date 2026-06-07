@@ -1,7 +1,7 @@
 ---
 layout: home
 profile_picture:
-  src: /assets/img/Lanqing_Jia.JPG
+  src: /assets/img/Lanqing_Jia.jpg
   alt: website picture
 ---
 <p style="margin-top: 20px;">
