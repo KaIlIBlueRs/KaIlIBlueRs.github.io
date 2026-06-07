@@ -1,0 +1,35 @@
+# Travel entries shown as markers on the Travel map.
+# Each entry represents one city. Add as many photos per city as you'd like.
+#
+# Required fields: city, lat, lng
+# Optional fields: country, date, notes, photos
+#
+# To find coordinates: search the city on Google Maps, right-click the map,
+# and the first item in the menu is "latitude, longitude".
+
+- city: New Brunswick
+  country: USA
+  lat: 40.4862
+  lng: -74.4518
+  date: "2026-09"
+  notes: My new home for the next few years.
+  photos: []
+
+- city: Shanghai
+  country: China
+  lat: 31.2304
+  lng: 121.4737
+  date: "2022-2026"
+  notes: Where I spent my undergrad years at Fudan.
+  photos:
+    # Example entry - replace src with your own photo paths once added
+    # - src: /assets/img/travel/shanghai/bund.jpg
+    #   caption: The Bund at night
+
+- city: New Haven
+  country: USA
+  lat: 41.3083
+  lng: -72.9279
+  date: "2026"
+  notes: Visiting my partner at Yale.
+  photos: []

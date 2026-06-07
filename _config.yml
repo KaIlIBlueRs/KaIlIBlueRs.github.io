@@ -1,0 +1,42 @@
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+
+title: Lanqing Jia
+description: # this means to ignore newlines until "baseurl:"
+baseurl:  # the subpath of the site
+url: "https://KaIlIBlueRs.github.io" # the base hostname & protocol for the site
+og_image:
+google_analytics:
+
+header:
+  pages:
+    - name: Home
+      slug: /
+    - name: Research
+    - name: Travel
+
+footer:
+  show_powered_by: true
+
+# Build settings
+markdown: kramdown
+sass:
+    style: :compressed
+plugins:
+  - jekyll-feed
+
+# Excluded items
+exclude:
+  - .sass-cache/
+  - .jekyll-cache/
+  - feed.xml
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+
+# Used for defeating caching
+version: 1

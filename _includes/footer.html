@@ -1,0 +1,16 @@
+<footer class="site-footer">
+  <div class="wrapper">
+    <div class="footer-col-wrapper">
+
+      {% if site.footer.show_powered_by == true %}
+          <center>
+          <p>
+           Powered by <a href="https://github.com/eliottvincent/bay">Bay</a>, {{ 'now' | date: "%Y" }}. © All rights reserved. Updated at {{ site.time | date: "%b %Y" }}.
+          </p>
+          </center>
+      {% endif %}
+    </div>
+  </div>
+</footer>
+
+{% include wechat-widget.html %}
