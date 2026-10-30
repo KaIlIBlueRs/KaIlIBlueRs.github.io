@@ -3,7 +3,10 @@
     "week": "01",
     "title": "Python foundations",
     "description": "A hands-on notebook exploring Python data types, collections, control flow, functions, and error handling. Small exercises build toward a gradebook analyzer, with an additional example of calling a language model API.",
-    "tags": ["Python", "Programming fundamentals"],
+    "tags": [
+      "Python",
+      "Programming fundamentals"
+    ],
     "notebook": "Copy of Python_Beginners_Tutorial.ipynb",
     "resources": [],
     "note": "Most examples use the Python standard library. The optional API example requires the openai package and an OPENAI_API_KEY environment variable. The published copy removes the embedded credential."
@@ -12,64 +15,183 @@
     "week": "02",
     "title": "Recognizing handwritten digits",
     "description": "Implements a neural network from scratch with NumPy and SciPy, then trains and evaluates it on MNIST. The notebook explores repeated training and tests the classifier on images of my own handwriting.",
-    "tags": ["Neural networks", "MNIST", "NumPy"],
+    "tags": [
+      "Neural networks",
+      "MNIST",
+      "NumPy"
+    ],
     "notebook": "MyNN.ipynb",
-    "resources": [["assignments/week-01.docx", "Assignment brief · assigned in Week 1"]],
+    "resources": [
+      [
+        "assignments/week-01.docx",
+        "Assignment brief · assigned in Week 1"
+      ]
+    ],
     "note": "Uses NumPy, SciPy, Matplotlib, and Pillow. The MNIST training/test CSVs and handwritten_digits images were not in my supplied folders; saved notebook outputs remain available. The original exploration also references data_list before defining it, so a fresh run needs that variable set from training_data_list."
   },
   {
     "week": "03",
     "title": "Building a corpus of SEC filings",
     "description": "Uses the SEC company index to download 100 Form 10-K filings and builds a lowercase word-frequency dictionary across the downloaded text. This creates the starting point for the financial-text analyses in the following weeks.",
-    "tags": ["SEC EDGAR", "Text collection", "Word frequencies"],
+    "tags": [
+      "SEC EDGAR",
+      "Text collection",
+      "Word frequencies"
+    ],
     "notebook": "Download-10Ks.ipynb",
-    "resources": [["shared/company.idx.zip", "SEC company index · ZIP"], ["weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv", "Loughran–McDonald dictionary · CSV"], ["weeks/week-03/cleanText.txt", "Saved text file from my folder · TXT"], ["assignments/week-02.docx", "Assignment brief · assigned in Week 2"]],
-    "note": "Uses requests and Google Colab/Drive paths. Extract company.idx.zip and update the index/output paths before rerunning. The downloaded raw filing corpus was not supplied; the notebook contains the collection code. The dictionary and saved text file are included as they appeared in my Week 3 folder."
+    "resources": [
+      [
+        "shared/company.idx.zip",
+        "SEC company index · ZIP"
+      ],
+      [
+        "weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv",
+        "Loughran–McDonald dictionary · CSV"
+      ],
+      [
+        "weeks/week-03/cleanText.txt",
+        "Original empty text placeholder · TXT"
+      ],
+      [
+        "assignments/week-02.docx",
+        "Assignment brief · assigned in Week 2"
+      ]
+    ],
+    "note": "Uses requests and Google Colab/Drive paths. Extract company.idx.zip and update the index/output paths before rerunning. The downloaded raw filing corpus was not supplied; the notebook contains the collection code. The dictionary and empty cleanText.txt placeholder are included as they appeared in my Week 3 folder."
   },
   {
     "week": "04",
     "title": "Dictionary-based financial sentiment",
     "description": "Explores HTML-to-text cleaning and financial word lists, then assembles a pandas table of word counts and positive, negative, and litigious language rates across the filing corpus. It is an early exercise in turning documents into measurable features.",
-    "tags": ["Sentiment analysis", "Loughran–McDonald", "pandas"],
+    "tags": [
+      "Sentiment analysis",
+      "Loughran–McDonald",
+      "pandas"
+    ],
     "notebook": "SentimentAnalysis.ipynb",
-    "resources": [["weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv", "Loughran–McDonald dictionary · CSV"], ["shared/NegativeWords.txt", "Negative word list · TXT"], ["shared/cleanText.txt", "Shared sample text · TXT"], ["assignments/week-03.docx", "Assignment brief · assigned in Week 3"]],
+    "resources": [
+      [
+        "weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv",
+        "Loughran–McDonald dictionary · CSV"
+      ],
+      [
+        "shared/NegativeWords.txt",
+        "Negative word list · TXT"
+      ],
+      [
+        "shared/cleanText.txt",
+        "Shared word list · TXT"
+      ],
+      [
+        "assignments/week-03.docx",
+        "Assignment brief · assigned in Week 3"
+      ]
+    ],
     "note": "Uses pandas, requests/Beautiful Soup in the collection workflow, and Google Drive paths. The referenced sample SEC submission is an empty file in the supplied course folder, and the raw corpus is absent. This notebook is preserved as submitted: its sentiment counters accumulate across files rather than resetting for each filing."
   },
   {
     "week": "05",
     "title": "Readability and forward-looking language",
     "description": "Adds sentence counts, syllable-based complexity measures, and the Gunning Fog index to financial text analysis. Identifies future-oriented sentences and computes parallel sentiment and readability measures for that subset, exporting the results to CSV.",
-    "tags": ["NLTK", "Readability", "Forward-looking language"],
+    "tags": [
+      "NLTK",
+      "Readability",
+      "Forward-looking language"
+    ],
     "notebook": "Readability.ipynb",
-    "resources": [["weeks/week-05/readability_future.csv", "Readability and future-language results · CSV"], ["shared/cmudict.txt", "CMU pronunciation dictionary · TXT"], ["weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv", "Loughran–McDonald dictionary · CSV"], ["assignments/week-04.docx", "Assignment brief · assigned in Week 4"]],
+    "resources": [
+      [
+        "weeks/week-05/readability_future.csv",
+        "Readability and future-language results · CSV"
+      ],
+      [
+        "shared/cmudict.txt",
+        "CMU pronunciation dictionary · TXT"
+      ],
+      [
+        "weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv",
+        "Loughran–McDonald dictionary · CSV"
+      ],
+      [
+        "assignments/week-04.docx",
+        "Assignment brief · assigned in Week 4"
+      ]
+    ],
     "note": "Uses pandas and NLTK with punkt_tab, plus the two included dictionaries. To rerun, update the Google Drive paths and provide the raw filing corpus. The supplied results CSV can be explored independently."
   },
   {
     "week": "06",
     "title": "Extracting and analyzing MD&A",
     "description": "Extracts Item 7, Management’s Discussion and Analysis, from SEC filings using regular expressions and document cleaning. Compares whole-filing and MD&A measures, flags questionable extractions, and saves both a compact results table and a reusable dataframe with the extracted text.",
-    "tags": ["Regular expressions", "MD&A", "Data validation"],
+    "tags": [
+      "Regular expressions",
+      "MD&A",
+      "Data validation"
+    ],
     "notebook": "Regular Expressions.ipynb",
-    "resources": [["weeks/week-06/readability_mda.csv", "MD&A analysis results · CSV"], ["weeks/week-06/dataFrame.pkl.zip", "Full dataframe with extracted text · ZIP"], ["shared/cmudict.txt", "CMU pronunciation dictionary · TXT"], ["weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv", "Loughran–McDonald dictionary · CSV"], ["assignments/week-05.docx", "Assignment brief · assigned in Week 5"]],
+    "resources": [
+      [
+        "weeks/week-06/readability_mda.csv",
+        "MD&A analysis results · CSV"
+      ],
+      [
+        "weeks/week-06/dataFrame.pkl.zip",
+        "Full dataframe with extracted text · ZIP"
+      ],
+      [
+        "shared/cmudict.txt",
+        "CMU pronunciation dictionary · TXT"
+      ],
+      [
+        "weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv",
+        "Loughran–McDonald dictionary · CSV"
+      ],
+      [
+        "assignments/week-05.docx",
+        "Assignment brief · assigned in Week 5"
+      ]
+    ],
     "note": "Uses pandas and NLTK; the source notebook retains its Google Drive paths. The CSV and losslessly compressed dataframe are included. Rebuilding from scratch requires the missing raw filing corpus; loading the saved dataframe does not."
   },
   {
     "week": "07",
     "title": "Structuring earnings-call transcripts",
     "description": "Collects 200 earnings calls and organizes their content into linked call-level and speaker-turn tables. Separates prepared remarks from Q&A and reviews calls where the initial boundary-detection rule fails; the saved run reports 8,796 speaker turns.",
-    "tags": ["Web scraping", "Earnings calls", "Speaker turns"],
+    "tags": [
+      "Web scraping",
+      "Earnings calls",
+      "Speaker turns"
+    ],
     "notebook": "EarningsCall.ipynb",
-    "resources": [["assignments/week-06.docx", "Assignment brief · assigned in Week 6"]],
+    "resources": [
+      [
+        "assignments/week-06.docx",
+        "Assignment brief · assigned in Week 6"
+      ]
+    ],
     "note": "Uses requests, Beautiful Soup, pandas, and Google Drive paths. The generated DF1.csv, DF2.csv, and transcript text files were not included in my supplied folder. Saved outputs and the notes on 22 undetected Q&A boundaries are preserved in the notebook."
   },
   {
     "week": "09",
     "title": "Remarks Lab: an explainable text classifier",
     "description": "A browser-based multinomial Naive Bayes classifier that distinguishes prepared earnings-call remarks from management’s answers to questions. Shows class scores, word-level contributions, source examples, and held-out evaluation, alongside a Python notebook explaining training and testing.",
-    "tags": ["Naive Bayes", "Explainable classification", "Interactive demo"],
+    "tags": [
+      "Naive Bayes",
+      "Explainable classification",
+      "Interactive demo"
+    ],
     "notebook": "EarningsCall_NaiveBayes.ipynb",
     "demo": "weeks/week-09/index.html",
-    "resources": [["weeks/week-09/index.html", "Standalone classifier · HTML"], ["assignments/week-09.docx", "Assignment brief · Week 9"]],
+    "resources": [
+      [
+        "weeks/week-09/index.html",
+        "Standalone classifier · HTML"
+      ],
+      [
+        "assignments/week-09.docx",
+        "Assignment brief · Week 9"
+      ]
+    ],
     "note": "The interactive demo includes its trained model and works entirely in the browser. The notebook needs corpus.json to retrain or reevaluate; that file was not supplied. The demo’s embedded source samples are not the complete training corpus."
   }
 ]

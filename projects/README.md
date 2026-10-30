@@ -28,8 +28,8 @@ do not depend on this module. Normal navigation links point back to those pages.
   and excluded presentations. No personal absolute source paths are published.
 - `weeks/` contains submitted notebooks, readable HTML copies, results, and
   the original standalone Week 9 demo. The demo is copied byte for byte.
-- `shared/` contains the SEC company index, negative word list, shared sample
-  text, and CMU pronunciation dictionary. Their origins remain in the inventory.
+- `shared/` contains the SEC company index, negative word lists, and CMU
+  pronunciation dictionary. Their origins remain in the inventory.
 - `assignments/` contains the relevant original course briefs, linked to the
   projects they describe, even when assigned in the preceding week.
 

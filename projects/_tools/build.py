@@ -22,6 +22,8 @@ def url(path):
 
 def size(path):
     n = (ROOT / path).stat().st_size
+    if n == 0:
+        return '0 bytes'
     return f'{n / 1_000_000:.1f} MB' if n >= 1_000_000 else f'{max(1, round(n / 1000))} KB'
 
 
