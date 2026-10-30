@@ -1,0 +1,213 @@
+{
+  "files": [
+    {
+      "source": "week 01/Lanqing Jia/Copy of Python_Beginners_Tutorial.ipynb",
+      "path": "weeks/week-01/Copy of Python_Beginners_Tutorial.ipynb",
+      "source_sha256": "3f756c089ad3ea5a2c215cd57be19af3115988a266858a3916287d25e8b1c238",
+      "published_sha256": "d2c2294f86c58877df306616e04be494c5494aa59dc733f373a8527a9497277c",
+      "change": "Removed embedded API credential; use OPENAI_API_KEY. Cleared the affected cell output."
+    },
+    {
+      "source": "week 02/Lanqing Jia/MyNN.ipynb",
+      "path": "weeks/week-02/MyNN.ipynb",
+      "source_sha256": "299051a1e68211a75ce06bb95fd9df4eb25455438810ea6b294341e476c5d56e",
+      "published_sha256": "299051a1e68211a75ce06bb95fd9df4eb25455438810ea6b294341e476c5d56e",
+      "change": null
+    },
+    {
+      "source": "week 03/Lanqing Jia/Download-10Ks.ipynb",
+      "path": "weeks/week-03/Download-10Ks.ipynb",
+      "source_sha256": "bdae011e7119a5da093489c6cb2062d603d05a0b6d0eaa11c34154d9c7324cb6",
+      "published_sha256": "bdae011e7119a5da093489c6cb2062d603d05a0b6d0eaa11c34154d9c7324cb6",
+      "change": null
+    },
+    {
+      "source": "week 03/Lanqing Jia/Loughran-McDonald_MasterDictionary_1993-2025.csv",
+      "path": "weeks/week-03/Loughran-McDonald_MasterDictionary_1993-2025.csv",
+      "source_sha256": "e2d1328682bab7d2187684fb9f5420bb730401c9eefc00daf835edd203f4859d",
+      "published_sha256": "e2d1328682bab7d2187684fb9f5420bb730401c9eefc00daf835edd203f4859d",
+      "change": null
+    },
+    {
+      "source": "week 03/Lanqing Jia/cleanText.txt",
+      "path": "weeks/week-03/cleanText.txt",
+      "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "published_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "change": null
+    },
+    {
+      "source": "week 04/Lanqing Jia/SentimentAnalysis.ipynb",
+      "path": "weeks/week-04/SentimentAnalysis.ipynb",
+      "source_sha256": "a9e3443f66f71f5f77d8cf01e387867c963b1072a9251a36a2cda0c2499ea125",
+      "published_sha256": "a9e3443f66f71f5f77d8cf01e387867c963b1072a9251a36a2cda0c2499ea125",
+      "change": null
+    },
+    {
+      "source": "week 05 /Lanqing Jia/Readability.ipynb",
+      "path": "weeks/week-05/Readability.ipynb",
+      "source_sha256": "7bf91678632e91a1eb895bae8f7aa67f438e7135c9a66c86b005bc165a8f6913",
+      "published_sha256": "7bf91678632e91a1eb895bae8f7aa67f438e7135c9a66c86b005bc165a8f6913",
+      "change": null
+    },
+    {
+      "source": "week 05 /Lanqing Jia/readability_future.csv",
+      "path": "weeks/week-05/readability_future.csv",
+      "source_sha256": "964608cd73d44a0768f9ac492ad9159f7f29855a7c25f189740a7fa6e70485f9",
+      "published_sha256": "964608cd73d44a0768f9ac492ad9159f7f29855a7c25f189740a7fa6e70485f9",
+      "change": null
+    },
+    {
+      "source": "week 06/Lanqing Jia/Regular Expressions.ipynb",
+      "path": "weeks/week-06/Regular Expressions.ipynb",
+      "source_sha256": "f5129e258a77f00a4ead2cfa6ce5929ab171efd33a9312f2b983aa75f9243005",
+      "published_sha256": "f5129e258a77f00a4ead2cfa6ce5929ab171efd33a9312f2b983aa75f9243005",
+      "change": null
+    },
+    {
+      "source": "week 06/Lanqing Jia/dataFrame.pkl",
+      "path": "weeks/week-06/dataFrame.pkl.zip",
+      "source_sha256": "db02cbc033d746d008b6b8bdabd6c5c9149137d533b9cdeecc1e17d55aeb4e87",
+      "published_sha256": "8742dde5bde8dfc103bc7d6f5502adaa37e1a8eb1e9b4a03ba37037c9577216c",
+      "change": "Lossless ZIP; extract before use."
+    },
+    {
+      "source": "week 06/Lanqing Jia/readability_mda.csv",
+      "path": "weeks/week-06/readability_mda.csv",
+      "source_sha256": "6d092a142487d7f7671e6153fbefad137f97987529d61dfb07d3b477ea57349f",
+      "published_sha256": "6d092a142487d7f7671e6153fbefad137f97987529d61dfb07d3b477ea57349f",
+      "change": null
+    },
+    {
+      "source": "week 07/Lanqing/EarningsCall.ipynb",
+      "path": "weeks/week-07/EarningsCall.ipynb",
+      "source_sha256": "5beb28fd970a9ab896575787e6834979fec3764e455e3625e52f75656e272877",
+      "published_sha256": "5beb28fd970a9ab896575787e6834979fec3764e455e3625e52f75656e272877",
+      "change": null
+    },
+    {
+      "source": "week 09/Lanqing/EarningsCall_NaiveBayes.ipynb",
+      "path": "weeks/week-09/EarningsCall_NaiveBayes.ipynb",
+      "source_sha256": "781df00dfba455bb410fc11bc6e9fc8c696729f0b3c8938d08210c9c510bb83f",
+      "published_sha256": "781df00dfba455bb410fc11bc6e9fc8c696729f0b3c8938d08210c9c510bb83f",
+      "change": null
+    },
+    {
+      "source": "week 09/Lanqing/index.html",
+      "path": "weeks/week-09/index.html",
+      "source_sha256": "b601a2528ec6388376fb4c767dbc0fe6b6ae8e3571c700812105515913a9a180",
+      "published_sha256": "b601a2528ec6388376fb4c767dbc0fe6b6ae8e3571c700812105515913a9a180",
+      "change": null
+    },
+    {
+      "source": "week 01/company.idx",
+      "path": "shared/company.idx.zip",
+      "source_sha256": "5e28bcb99193ff34dfe520fb59c5eec285f22dd6dfbb51991c174f226bc9d53c",
+      "published_sha256": "37e0147ba00a3ca148cb30f90278ed55c06f075422620dbdeb60323ed81d9a5d",
+      "change": "Lossless ZIP; extract before use."
+    },
+    {
+      "source": "week 03/NegativeWords.txt",
+      "path": "shared/NegativeWords.txt",
+      "source_sha256": "91fe5a4fe28947049d93d1892201f0b1741ad61fd4b5e48e9708182d367a0a55",
+      "published_sha256": "91fe5a4fe28947049d93d1892201f0b1741ad61fd4b5e48e9708182d367a0a55",
+      "change": null
+    },
+    {
+      "source": "week 03/cleanText.txt",
+      "path": "shared/cleanText.txt",
+      "source_sha256": "6198c079845b6cae2476e81bb6c046e81556e0484adbfa31a424a0d26bec2871",
+      "published_sha256": "6198c079845b6cae2476e81bb6c046e81556e0484adbfa31a424a0d26bec2871",
+      "change": null
+    },
+    {
+      "source": "week 04/cmudict.txt",
+      "path": "shared/cmudict.txt",
+      "source_sha256": "fd1a4a40bf612a45d9e207ed633bf8c0238873291f774557ef14771099775c88",
+      "published_sha256": "fd1a4a40bf612a45d9e207ed633bf8c0238873291f774557ef14771099775c88",
+      "change": null
+    },
+    {
+      "source": "week 01/Week 01 Assignment.docx",
+      "path": "assignments/week-01.docx",
+      "source_sha256": "7f40a4ea60d84a4bb999b22db50c689cdd20636a670a2d8babab9ddcecfd24f5",
+      "published_sha256": "7f40a4ea60d84a4bb999b22db50c689cdd20636a670a2d8babab9ddcecfd24f5",
+      "change": null
+    },
+    {
+      "source": "week 02/Coding Assignment_ due week 03.docx",
+      "path": "assignments/week-02.docx",
+      "source_sha256": "01e9abbf506983f2f36c14ed09209d1b6b96ba0b01bb27d4ce5b44a43beac721",
+      "published_sha256": "01e9abbf506983f2f36c14ed09209d1b6b96ba0b01bb27d4ce5b44a43beac721",
+      "change": null
+    },
+    {
+      "source": "week 03/coding assignment.docx",
+      "path": "assignments/week-03.docx",
+      "source_sha256": "be0c03ccd54ec1143789863f47c185218ca5b47109f2ccce3030cde7485c1ae5",
+      "published_sha256": "be0c03ccd54ec1143789863f47c185218ca5b47109f2ccce3030cde7485c1ae5",
+      "change": null
+    },
+    {
+      "source": "week 04/week 04 assignment.docx",
+      "path": "assignments/week-04.docx",
+      "source_sha256": "b9cdf63fddc4e63126570bbaad8af8f8cf7de7beef8457fa472a90e9a0114697",
+      "published_sha256": "b9cdf63fddc4e63126570bbaad8af8f8cf7de7beef8457fa472a90e9a0114697",
+      "change": null
+    },
+    {
+      "source": "week 05 /Assignment.docx",
+      "path": "assignments/week-05.docx",
+      "source_sha256": "4bdf84e10ab56eef374ce9d1d6bed90cd17c0e152e046757edab6dde7b21b04f",
+      "published_sha256": "4bdf84e10ab56eef374ce9d1d6bed90cd17c0e152e046757edab6dde7b21b04f",
+      "change": null
+    },
+    {
+      "source": "week 06/download earnings calls assignment.docx",
+      "path": "assignments/week-06.docx",
+      "source_sha256": "3d7587bfaa3568def625c76d64e21b52e08e1cb4ecd73de0a6aaee5f0d5a10fa",
+      "published_sha256": "3d7587bfaa3568def625c76d64e21b52e08e1cb4ecd73de0a6aaee5f0d5a10fa",
+      "change": null
+    },
+    {
+      "source": "week 09/Assignment.docx",
+      "path": "assignments/week-09.docx",
+      "source_sha256": "58333e6d6d5387321033bf699a65fcfef640b66ce5119e39d38bb4ce2d1710bb",
+      "published_sha256": "58333e6d6d5387321033bf699a65fcfef640b66ce5119e39d38bb4ce2d1710bb",
+      "change": null
+    }
+  ],
+  "excluded": [
+    {
+      "source": "week 02/Lanqing Jia/MyNN.pdf",
+      "reason": "Presentation slides (PDF slides identified from their content)."
+    },
+    {
+      "source": "week 03/Lanqing Jia/Textual_Analysis_Presentation.pdf",
+      "reason": "Presentation slides (PDF slides identified from their content)."
+    },
+    {
+      "source": "week 04/Lanqing Jia/slides.pdf",
+      "reason": "Presentation slides (PDF slides identified from their content)."
+    },
+    {
+      "source": "week 05 /Lanqing Jia/Loughran_McDonald_2011.pptx",
+      "reason": "Presentation slides (PDF slides identified from their content)."
+    },
+    {
+      "source": "week 06/Lanqing Jia/Larcker-Zakolyukina-2012.pptx",
+      "reason": "Presentation slides (PDF slides identified from their content)."
+    },
+    {
+      "source": "week 07/Lanqing/AI_Co-Piloted_Auditing_10min.pptx",
+      "reason": "Presentation slides (PDF slides identified from their content)."
+    },
+    {
+      "source": "week 08/Lanqing Jia/REA_Modeling.pptx",
+      "reason": "Presentation slides (PDF slides identified from their content)."
+    },
+    {
+      "source": "week 09/Lanqing/AI_Assurance.pptx",
+      "reason": "Presentation slides (PDF slides identified from their content)."
+    }
+  ]
+}

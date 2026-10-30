@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Extracting and analyzing MD&amp;A — Lanqing Jia’s Fall 2026 Text Mining coursework, notebooks, and data.">
+  <title>Extracting and analyzing MD&amp;A | Lanqing Jia</title>
+  <link rel="stylesheet" href="../../assets/projects.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="shell header-inner">
+  <a class="brand" href="../../../">Lanqing Jia</a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="../../../">Home</a><a href="../../../research">Research</a><a href="../../../travel">Travel</a><a href="../../" aria-current="true">Projects</a>
+  </nav>
+</div></header>
+<main id="main" class="shell notebook">
+<p class="eyebrow"><a href="../../#week-06">← All projects</a> / Week 06</p>
+<h1>Extracting and analyzing MD&amp;A</h1><p class="intro">Extracts Item 7, Management’s Discussion and Analysis, from SEC filings using regular expressions and document cleaning. Compares whole-filing and MD&amp;A measures, flags questionable extractions, and saves both a compact results table and a reusable dataframe with the extracted text.</p>
+<div class="actions"><a href="Regular%20Expressions.ipynb" download>Download notebook (.ipynb)</a></div>
+<p class="run-note">Static notebook reader. Code and saved outputs are displayed without running them. Uses pandas and NLTK; the source notebook retains its Google Drive paths. The CSV and losslessly compressed dataframe are included. Rebuilding from scratch requires the missing raw filing corpus; loading the saved dataframe does not.</p>
+<section class="cell markdown-cell"><p>Extract Item7, MD&amp;A, from your 100 10-Ks (/content/drive/MyDrive/Fall2026TextMining_me/Lanqing10Ks). Put MD&amp;A in your dataframe in one column. Run all of your code on the MD&amp;A and put in dataframe. (Your df will contain data for the entire 10-K, and data for the MD&amp;A.)</p>
+
+<p>Save your df as a pickle object so you don’t have to start from scratch any more!</p>
+</section><section class="cell"><div class="notebook-label">Cell 2</div><pre><code>from google.colab import drive
+drive.mount(&#x27;/content/drive&#x27;)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount(&quot;/content/drive&quot;, force_remount=True).
+</pre></details></section><section class="cell markdown-cell"><h1 id="this-is-the-hardest-homework-ever-">This is the hardest homework ever :(</h1>
+</section><section class="cell markdown-cell"><p>Pickle example:</p>
+
+<p>”””
+for each file:
+  new_row = pd.DataFrame({‘filename’: [filename], ‘companyName’: [companyName], ‘CIK’: [CIK], ‘uploadDate’: [uploadDate]})
+  df = pd.concat([df, new_row], ignore_index=True)</p>
+
+<p>def getFogScore(text):
+  fogscore = …
+  return fogScore</p>
+
+<p>df[‘fogScore’] = df[‘cleanText’].apply(getFogScore)</p>
+
+<p>after dataFrame is created, after you have cleaned your text</p>
+
+<p>df.to_pickle(somePathinYourGoogleDrive/dataFrame.pkl)</p>
+
+<p>”””</p>
+</section><section class="cell"><div class="notebook-label">Cell 5</div><pre><code>import re
+
+testString1 = &quot;blah blah blah Item 7.    Management&#x27;s Discussion and Analysis of Financial Condition and Results of Operations The following discussion should be read...&quot;
+testString2 = testString1 + &quot;Item 7A.    Quantitative and Qualitative Disclosures About Market Risk&quot;
+
+item7RegEx = re.compile(&quot;Item 7&quot;)
+print(item7RegEx.findall(testString2))
+
+item7RegEx2 = re.compile(&quot;Item 7.+Item 7A&quot;)
+print(item7RegEx2.findall(testString2))
+
+item7RegEx3 = re.compile(&quot;Item 7.+?Item 7A&quot;)
+print(item7RegEx3.findall(testString2))
+
+item7RegEx4 = re.compile(&quot;Item 7(.+?)Item 7A&quot;, re.S)
+print(item7RegEx4.search(testString2).group(1))
+
+item7RegEx5 = re.compile(&quot;I(tem 7(.+?)Item 7A)&quot;, re.S)
+print(item7RegEx5.search(testString2).group(1))
+print(item7RegEx5.search(testString2).group(2))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>[&#x27;Item 7&#x27;, &#x27;Item 7&#x27;]
+[&quot;Item 7.    Management&#x27;s Discussion and Analysis of Financial Condition and Results of Operations The following discussion should be read...Item 7A&quot;]
+[&quot;Item 7.    Management&#x27;s Discussion and Analysis of Financial Condition and Results of Operations The following discussion should be read...Item 7A&quot;]
+.    Management&#x27;s Discussion and Analysis of Financial Condition and Results of Operations The following discussion should be read...
+tem 7.    Management&#x27;s Discussion and Analysis of Financial Condition and Results of Operations The following discussion should be read...Item 7A
+.    Management&#x27;s Discussion and Analysis of Financial Condition and Results of Operations The following discussion should be read...
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 6</div><pre><code>import nltk
+nltk.download(&#x27;punkt_tab&#x27;)
+
+import os
+import re
+import glob
+import pandas as pd
+import html
+from html.parser import HTMLParser
+from nltk.tokenize import sent_tokenize, word_tokenize</code></pre><details class="cell-output"><summary>Saved output</summary><pre>[nltk_data] Downloading package punkt_tab to /root/nltk_data...
+[nltk_data]   Unzipping tokenizers/punkt_tab.zip.
+</pre></details></section><section class="cell markdown-cell"><h1 id="syllable-count-same-as-before">Syllable Count same as before</h1>
+</section><section class="cell"><div class="notebook-label">Cell 8</div><pre><code>CMUDICT_PATH = &quot;/content/drive/MyDrive/Fall 2026 Text Mining/week 04/cmudict.txt&quot;
+
+cmudict = {}
+with open(CMUDICT_PATH, encoding=&quot;latin-1&quot;) as f:
+  for line in f:
+    if line.startswith(&quot;;;;&quot;):
+      continue
+    cols = line.split()
+    if not cols:
+      continue
+    word = cols[0]
+    if &quot;(&quot; in word:
+      word = word[:word.index(&quot;(&quot;)]
+    cmudict.setdefault(word.lower(), cols[1:])
+
+print(len(cmudict))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>125764
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 9</div><pre><code>def countVowelGroups(word):
+  word = word.lower()
+  groups = re.findall(r&quot;[aeiouy]+&quot;, word)
+  numSyllables = len(groups)
+  if word.endswith(&quot;e&quot;) and not word.endswith((&quot;le&quot;, &quot;ee&quot;, &quot;ye&quot;)) and numSyllables &gt; 1:
+    numSyllables -= 1
+  return max(numSyllables, 1)
+
+syllableCache = {}
+
+def getSyllables(words):
+  word = words.lower()
+  if word in syllableCache:
+    return syllableCache[word]
+
+  phonemes = cmudict.get(word)
+  if phonemes is None:
+    syllables = countVowelGroups(word)
+  else:
+    numSyllables = sum(1 for p in phonemes if p[-1].isdigit())
+    syllables = numSyllables
+
+  syllableCache[word] = syllables
+  return syllables
+
+def isComplexWord(word):
+  return getSyllables(word) &gt; 2
+
+print(getSyllables(&quot;Kevin&quot;), isComplexWord(&quot;Kevin&quot;))
+print(getSyllables(&quot;readability&quot;), isComplexWord(&quot;readability&quot;))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>2 False
+5 True
+</pre></details></section><section class="cell markdown-cell"><h1 id="future-sentences-same-as-before">Future Sentences same as before</h1>
+</section><section class="cell"><div class="notebook-label">Cell 11</div><pre><code>FUTURE_WORDS = {&quot;will&quot;, &quot;shall&quot;, &quot;may&quot;, &quot;might&quot;, &quot;should&quot;}
+
+def isFuture(sentence, words=None):
+  if words is None:
+    words = [w.lower() for w in word_tokenize(sentence)]
+
+  for word in words:
+    if word in FUTURE_WORDS:
+      return True
+
+  # &quot;going to&quot; is two tokens; NLTK also splits &quot;gonna&quot; into &quot;gon&quot; + &quot;na&quot;
+  for i in range(len(words) - 1):
+    if words[i] == &quot;going&quot; and words[i + 1] == &quot;to&quot;:
+      return True
+    if words[i] == &quot;gon&quot; and words[i + 1] == &quot;na&quot;:
+      return True
+
+  return False
+
+
+text = &quot;NLTK is gonna be a great NLP toolkit. It makes processing text easy! Revenue will grow.&quot;
+for s in sent_tokenize(text):
+  print(isFuture(s), &quot;|&quot;, s)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>True | NLTK is gonna be a great NLP toolkit.
+False | It makes processing text easy!
+True | Revenue will grow.
+</pre></details></section><section class="cell markdown-cell"><h1 id="sentiment-words-same-as-before">Sentiment Words same as before</h1>
+</section><section class="cell"><div class="notebook-label">Cell 13</div><pre><code>lm = pd.read_csv(&quot;/content/drive/MyDrive/Fall 2026 Text Mining/week 03/Lanqing Jia/Loughran-McDonald_MasterDictionary_1993-2025.csv&quot;)
+lm[&quot;Word&quot;] = lm[&quot;Word&quot;].astype(str).str.lower()
+
+positive  = set(lm.loc[lm[&quot;Positive&quot;]  &gt; 0, &quot;Word&quot;])
+negative  = set(lm.loc[lm[&quot;Negative&quot;]  &gt; 0, &quot;Word&quot;])
+litigious = set(lm.loc[lm[&quot;Litigious&quot;] &gt; 0, &quot;Word&quot;])
+
+print(len(positive), len(negative), len(litigious))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>347 2345 903
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 14</div><pre><code>WORD_RE = re.compile(r&quot;^[a-z][a-z&#x27;]*$&quot;)
+
+def analyzeDocument(text):
+  stats = {
+      &quot;sentenceCount&quot;: 0, &quot;future_sentenceCount&quot;: 0,
+      &quot;wordCount&quot;: 0,     &quot;future_wordCount&quot;: 0,
+      &quot;complexWordCount&quot;: 0, &quot;future_complexWordCount&quot;: 0,
+      &quot;syllableCount&quot;: 0, &quot;future_syllableCount&quot;: 0,
+      &quot;PosWordCount&quot;: 0,  &quot;future_PosWordCount&quot;: 0,
+      &quot;NegWordCount&quot;: 0,  &quot;future_NegWordCount&quot;: 0,
+      &quot;LitWordCount&quot;: 0,  &quot;future_LitWordCount&quot;: 0,
+  }
+
+  for sentence in sent_tokenize(text):
+    tokens = [w.lower() for w in word_tokenize(sentence)]
+    words = [w for w in tokens if WORD_RE.match(w)]
+    if not words:
+      continue
+
+    future = isFuture(sentence, tokens)
+
+    stats[&quot;sentenceCount&quot;] += 1
+    if future:
+      stats[&quot;future_sentenceCount&quot;] += 1
+
+    for word in words:
+      syl = getSyllables(word)
+      complexWord = syl &gt; 2
+
+      stats[&quot;wordCount&quot;] += 1
+      stats[&quot;syllableCount&quot;] += syl
+      if complexWord:
+        stats[&quot;complexWordCount&quot;] += 1
+      if word in positive:
+        stats[&quot;PosWordCount&quot;] += 1
+      elif word in negative:
+        stats[&quot;NegWordCount&quot;] += 1
+      elif word in litigious:
+        stats[&quot;LitWordCount&quot;] += 1
+
+      if future:
+        stats[&quot;future_wordCount&quot;] += 1
+        stats[&quot;future_syllableCount&quot;] += syl
+        if complexWord:
+          stats[&quot;future_complexWordCount&quot;] += 1
+        if word in positive:
+          stats[&quot;future_PosWordCount&quot;] += 1
+        elif word in negative:
+          stats[&quot;future_NegWordCount&quot;] += 1
+        elif word in litigious:
+          stats[&quot;future_LitWordCount&quot;] += 1
+
+  return stats</code></pre></section><section class="cell"><div class="notebook-label">Cell 15</div><pre><code>def fogIndex(wordCount, sentenceCount, complexWordCount):
+  if wordCount == 0 or sentenceCount == 0:
+    return 0.0
+  return 0.4 * ((wordCount / sentenceCount) + 100.0 * (complexWordCount / wordCount))
+
+def rate(numerator, denominator):
+  if denominator == 0:
+    return 0.0
+  return numerator / denominator
+
+def makeColumns(s, prefix=&quot;&quot;):
+  cols = {}
+  for who in [&quot;&quot;, &quot;future_&quot;]:
+    wordCount        = s[who + &quot;wordCount&quot;]
+    sentenceCount    = s[who + &quot;sentenceCount&quot;]
+    complexWordCount = s[who + &quot;complexWordCount&quot;]
+    syllableCount    = s[who + &quot;syllableCount&quot;]
+
+    cols[prefix + who + &quot;wordCount&quot;]        = wordCount
+    cols[prefix + who + &quot;sentenceCount&quot;]    = sentenceCount
+    cols[prefix + who + &quot;complexWordCount&quot;] = complexWordCount
+    cols[prefix + who + &quot;PosWordCount&quot;]     = s[who + &quot;PosWordCount&quot;]
+    cols[prefix + who + &quot;NegWordCount&quot;]     = s[who + &quot;NegWordCount&quot;]
+    cols[prefix + who + &quot;LitWordCount&quot;]     = s[who + &quot;LitWordCount&quot;]
+    cols[prefix + who + &quot;PosRate&quot;]          = rate(s[who + &quot;PosWordCount&quot;], wordCount)
+    cols[prefix + who + &quot;NegRate&quot;]          = rate(s[who + &quot;NegWordCount&quot;], wordCount)
+    cols[prefix + who + &quot;LitRate&quot;]          = rate(s[who + &quot;LitWordCount&quot;], wordCount)
+    cols[prefix + who + &quot;complexRate&quot;]      = rate(complexWordCount, wordCount)
+    cols[prefix + who + &quot;wordsPerSentence&quot;] = rate(wordCount, sentenceCount)
+    cols[prefix + who + &quot;syllablesPerWord&quot;] = rate(syllableCount, wordCount)
+    cols[prefix + who + &quot;FOG&quot;]              = fogIndex(wordCount, sentenceCount, complexWordCount)
+
+  cols[prefix + &quot;futureSentenceRate&quot;] = rate(s[&quot;future_sentenceCount&quot;], s[&quot;sentenceCount&quot;])
+  cols[prefix + &quot;futureWordRate&quot;]     = rate(s[&quot;future_wordCount&quot;], s[&quot;wordCount&quot;])
+  return cols</code></pre></section><section class="cell markdown-cell"><h1 id="new-extracting-item7">NEW! Extracting Item7</h1>
+</section><section class="cell markdown-cell"><p>KNOWLEDGE: each txt file is more than one doc, but a whole EDGAR submission with complex layout, only the first is the 10-K</p>
+</section><section class="cell"><div class="notebook-label">Cell 18</div><pre><code># Step 1: SEC submission file  -&gt;  plain text of the filing itself
+
+# we want only the first filing block &lt;DOCUMENT&gt;
+
+def firstDocument(submission):
+  block = re.search(r&quot;&lt;DOCUMENT&gt;(.*?)&lt;/DOCUMENT&gt;&quot;, submission, re.I | re.S)
+  return block.group(1) if block else &quot;&quot; # for those with no &lt;DOCUMENT&gt; block at all (e.g. file 14)
+
+def getFormType(submission):
+  &quot;&quot;&quot;There could be &#x27;NT 10-K&#x27; for a late-filing notice, or &#x27;&#x27; if unreadable, we identify them&quot;&quot;&quot;
+  match = re.search(r&quot;&lt;TYPE&gt;[ \t]*([^\r\n&lt;]+)&quot;, firstDocument(submission), re.I)
+  # Why [ \t]* not \s*? \s* skips new lines as well while [ \t]* skips spaces/tabs only
+  # [^\r\n&lt;]+ -- one or more characters that are not a newline and not &quot;&lt;&quot; -- read to the end of the line and stop early if another tag begins
+  return match.group(1).strip() if match else &quot;&quot;
+
+def getDocumentHtml(submission):
+  &quot;&quot;&quot;Drops the &lt;TYPE&gt;&lt;SEQUENCE&gt;&lt;FILENAME&gt; header lines and keeps only the HTML part&quot;&quot;&quot;
+  block = firstDocument(submission)
+  match = re.search(r&quot;&lt;TEXT&gt;(.*?)&lt;/TEXT&gt;&quot;, block, re.I | re.S)
+  return match.group(1) if match else block # fallback if a block has no &lt;TEXT&gt; tag
+
+class SECTextExtractor(HTMLParser):
+  &quot;&quot;&quot;HTML basics: block tags start a new visual line,
+  while for skip tags, skipDepth counts how deep you are inside one of those tags,
+  and handle_data throws text away while the count is above zero&quot;&quot;&quot;
+
+  BLOCK_TAGS = {
+      &quot;p&quot;, &quot;div&quot;, &quot;br&quot;, &quot;tr&quot;, &quot;td&quot;, &quot;th&quot;, &quot;li&quot;, &quot;table&quot;, &quot;section&quot;, &quot;article&quot;,
+      &quot;h1&quot;, &quot;h2&quot;, &quot;h3&quot;, &quot;h4&quot;, &quot;h5&quot;, &quot;h6&quot;
+  }
+  SKIP_TAGS = {&quot;script&quot;, &quot;style&quot;, &quot;noscript&quot;, &quot;head&quot;, &quot;ix:hidden&quot;}
+  # ix:hidden is specific to SEC filings: it is the Inline-XBRL block holding machine-readable tags that are invisible to a human reader
+
+  def __init__(self):
+    super().__init__(convert_charrefs=True)
+    self.parts = []
+    self.skipDepth = 0
+
+  def handle_starttag(self, tag, attrs):
+    tag = tag.lower()
+    if tag in self.SKIP_TAGS:
+      self.skipDepth += 1
+    elif self.skipDepth == 0 and tag in self.BLOCK_TAGS:
+      self.parts.append(&quot;\n&quot;)
+
+  def handle_endtag(self, tag):
+    tag = tag.lower()
+    if tag in self.SKIP_TAGS:
+      self.skipDepth = max(0, self.skipDepth - 1)
+    elif self.skipDepth == 0 and tag in self.BLOCK_TAGS:
+      self.parts.append(&quot;\n&quot;)
+
+  def handle_data(self, data):
+    if self.skipDepth == 0:
+      self.parts.append(data)
+
+def cleanSECText(submission):
+  parser = SECTextExtractor()
+  parser.feed(getDocumentHtml(submission))
+  parser.close()
+
+  text = html.unescape(&quot;&quot;.join(parser.parts))      # second pass: catches double-escaped entities
+  text = text.replace(&quot;\xa0&quot;, &quot; &quot;).replace(&quot;\u200b&quot;, &quot;&quot;).replace(&quot;\u2028&quot;, &quot;\n&quot;)
+  text = re.sub(r&quot;[^\S\n]+&quot;, &quot; &quot;, text)            # any run of spaces/tabs -&gt; one space
+  text = re.sub(r&quot; *\n *&quot;, &quot;\n&quot;, text)             # no spaces hugging a line break
+  text = re.sub(r&quot;\n{3,}&quot;, &quot;\n\n&quot;, text)           # at most one blank line
+  return text.strip()</code></pre></section><section class="cell"><div class="notebook-label">Cell 19</div><pre><code># Step 2: two patterns -- where Item 7 starts, and where it ends
+
+# A real heading starts its own line (^ with re.M).
+# we want to identify false situations like &quot;...as discussed in Item 7 below&quot; where &quot;Item 7&quot; appears mid-sentence
+
+# GAP exists because many filers put &quot;Item&quot; and &quot;7&quot; in separate HTML cells, so the cleaned text reads &quot;ITEM\n7.&quot; per checking, 7/100 filings do this
+
+GAP   = r&quot;[ \t]*\n?[ \t]*&quot;            # spaces, and at most one line break
+PUNCT = r&quot;[.:)\-\u2013\u2014]?&quot;       # the separator, if the filer used one
+                                      # (\u2013 = en dash, \u2014 = em dash
+
+ITEM7_RE  = re.compile(r&quot;^[ \t]*item&quot; + GAP + r&quot;7&quot; + GAP + PUNCT + r&quot;\s{0,3}management&quot;,
+                       re.I | re.M)
+ITEM7A_RE = re.compile(r&quot;^[ \t]*item&quot; + GAP + r&quot;(?:7A|8)(?![0-9A-Za-z])&quot;, re.I | re.M)</code></pre></section><section class="cell"><div class="notebook-label">Cell 20</div><pre><code># Step 3: MD&amp;A = the LONGEST span from an Item 7 heading to the next Item 7A/8
+
+# Every filing has at least two Item 7 headings: one in the table of contents
+# and one on the real section. Pair each start with the NEAREST following end
+# and the table-of-contents pair is ~100 characters while the real one is tens
+# of thousands -- so &quot;take the longest&quot; picks the correct body
+
+def getMDA(cleanText):
+  starts = [m.start() for m in ITEM7_RE.finditer(cleanText)]
+  ends   = [m.start() for m in ITEM7A_RE.finditer(cleanText)]
+  if not starts:
+    return &quot;&quot;
+
+  spans = []
+  for start in starts:
+    end = next((position for position in ends if position &gt; start), len(cleanText))
+    spans.append((start, end))
+
+  start, end = max(spans, key=lambda span: span[1] - span[0])
+  return cleanText[start:end].strip()
+
+
+def mdaStatus(mdaText, cleanText, formType):
+  &quot;&quot;&quot;One label per filing&quot;&quot;&quot;
+  if not formType.upper().startswith(&quot;10-K&quot;): # why not &quot;==&quot;: &quot;startswith&quot; tolerates &quot;10-K405&quot;, &quot;10-KSB&quot;, &quot;10-K/A&quot; as well
+    return &quot;not an annual report (%s)&quot; % (formType or &quot;no form type&quot;)
+  if not mdaText:
+    return &quot;no Item 7 heading&quot;
+  if len(mdaText) &lt; 1000:
+    # Asset-backed filers answer Item 7 with &quot;Omitted&quot;, per checking there are 5 in our dataset
+    return &quot;omitted by filer&quot; if re.search(r&quot;\bomitted\b&quot;, mdaText, re.I) else &quot;suspiciously short&quot;
+
+  # sanity check for a reasonable MD&amp;A size
+  share = len(mdaText) / len(cleanText)
+  if share &lt; 0.01:
+    return &quot;suspiciously short&quot;
+  if share &gt; 0.60:
+    return &quot;suspiciously long&quot;
+  return &quot;valid&quot;</code></pre></section><section class="cell"><div class="notebook-label">Cell 21</div><pre><code># sanity check on a toy example
+toc  = &quot;Item 7.\nManagement&#x27;s Discussion and Analysis\n61\nItem 7A.\nQuantitative\n73\n&quot;
+other = &quot;Our risk factors are described below. &quot; * 300 + &quot;\nSee Item 7 for further detail.\n&quot;
+body = (&quot;ITEM\n7. MANAGEMENT&#x27;S DISCUSSION AND ANALYSIS\n\n&quot;
+        + &quot;The following discussion should be read with our financial statements. &quot; * 40)
+after = &quot;\nItem 7A. Quantitative and Qualitative Disclosures\n&quot; + &quot;We face interest rate risk. &quot; * 300
+
+miniTenK = toc + other + body + after
+mda = getMDA(miniTenK)
+
+print(&quot;starts on the body heading, not the contents:&quot;, mda.startswith(&quot;ITEM\n7. MANAGEMENT&#x27;S&quot;))
+print(&quot;survives the &#x27;ITEM&#x27; / &#x27;7&#x27; line break       :&quot;, bool(ITEM7_RE.search(body)))
+print(&quot;stops before Item 7A                       :&quot;, &quot;Item 7A&quot; not in mda)
+print(&quot;mid-sentence &#x27;See Item 7&#x27; not used         :&quot;, &quot;risk factors&quot; not in mda)
+print(&quot;{:,} chars | status: {}&quot;.format(len(mda), mdaStatus(mda, miniTenK, &quot;10-K&quot;)))
+print()
+
+prose = &quot;blah blah Item 7. Management&#x27;s Discussion and Analysis Item 7A. Quantitative&quot;
+print(&quot;prose-only reference:&quot;, getMDA(prose))
+print(&quot;an NT 10-K is labelled, not scored:&quot;, mdaStatus(&quot;&quot;, &quot;short notice&quot;, &quot;NT 10-K&quot;))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>starts on the body heading, not the contents: True
+survives the &#x27;ITEM&#x27; / &#x27;7&#x27; line break       : True
+stops before Item 7A                       : True
+mid-sentence &#x27;See Item 7&#x27; not used         : True
+2,885 chars | status: valid
+
+prose-only reference: &#x27;&#x27;
+an NT 10-K is labelled, not scored: not an annual report (NT 10-K)
+</pre></details></section><section class="cell markdown-cell"><h1 id="building-the-df">Building the df</h1>
+</section><section class="cell"><div class="notebook-label">Cell 23</div><pre><code>DOCS = &quot;/content/drive/MyDrive/Fall2026TextMining_me/Lanqing10Ks&quot;
+files = sorted(glob.glob(os.path.join(DOCS, &quot;*.txt&quot;)))
+print(len(files), &quot;files&quot;)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>100 files
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 24</div><pre><code># pilot test before running all 100
+for path in files[:3]:
+  rawSubmission = open(path, &quot;r&quot;, encoding=&quot;utf-8&quot;, errors=&quot;ignore&quot;).read()
+  formType  = getFormType(rawSubmission)
+  cleanText = cleanSECText(rawSubmission)
+  mdaText   = getMDA(cleanText)
+
+  print(os.path.basename(path), &quot;  form type:&quot;, formType)
+  print(&quot;  raw submission : {:&gt;9,} chars&quot;.format(len(rawSubmission)))
+  print(&quot;  filing itself  : {:&gt;9,} chars&quot;.format(len(cleanText)))
+  print(&quot;  MD&amp;A           : {:&gt;9,} chars  ({:.1%})  [{}]&quot;.format(
+      len(mdaText), len(mdaText) / len(cleanText) if cleanText else 0,
+      mdaStatus(mdaText, cleanText, formType)))
+  print(&quot;  starts:&quot;, repr(mdaText[:100]))
+  print(&quot;  ends  :&quot;, repr(mdaText[-100:]))
+  print()</code></pre><details class="cell-output"><summary>Saved output</summary><pre>100_10-K_903419_2025-03-14.txt   form type: 10-K
+  raw submission : 36,983,584 chars
+  filing itself  :   778,601 chars
+  MD&amp;A           :   110,294 chars  (14.2%)  [valid]
+  starts: &#x27;ITEM 7. MANAGEMENT’S DISCUSSION AND ANALYSIS OF FINANCIAL CONDITION AND RESULTS OF OPERATIONS\n\nThe f&#x27;
+  ends  : &#x27;mmon share. This dividend is payable on April 11, 2025, to stockholders of record on March 14, 2025.&#x27;
+
+10_10-K_1860782_2025-03-25.txt   form type: 10-K
+  raw submission : 12,100,667 chars
+  filing itself  :   642,583 chars
+  MD&amp;A           :    69,335 chars  (10.8%)  [valid]
+  starts: &#x27;Item 7. Management’s Discussion and Analysis of Financial Condition and Results of Operations\n\nYou s&#x27;
+  ends  : &#x27;new or revised accounting standards whenever such early adoption is permitted for private companies.&#x27;
+
+11_10-K_1860782_2025-03-17.txt   form type: NT 10-K
+  raw submission :    33,635 chars
+  filing itself  :     4,058 chars
+  MD&amp;A           :         0 chars  (0.0%)  [not an annual report (NT 10-K)]
+  starts: &#x27;&#x27;
+  ends  : &#x27;&#x27;
+
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 25</div><pre><code>rows = []
+
+for i, path in enumerate(files, 1):
+  rawSubmission = open(path, &quot;r&quot;, encoding=&quot;utf-8&quot;, errors=&quot;ignore&quot;).read()
+  formType  = getFormType(rawSubmission)
+  cleanText = cleanSECText(rawSubmission)
+  mdaText   = getMDA(cleanText)
+  status    = mdaStatus(mdaText, cleanText, formType)
+  if status != &quot;valid&quot;:
+    mdaText = &quot;&quot;
+
+  docStats = analyzeDocument(cleanText)
+  mdaStats = analyzeDocument(mdaText)
+
+  row = {&quot;fileName&quot;: os.path.basename(path), &quot;formType&quot;: formType}
+  row.update(makeColumns(docStats, &quot;&quot;))        # the whole filing
+  row.update(makeColumns(mdaStats, &quot;mda_&quot;))    # Item 7 only
+  row[&quot;cleanText&quot;]    = cleanText
+  row[&quot;mdaText&quot;]      = mdaText
+  row[&quot;raw_chars&quot;]    = len(rawSubmission)
+  row[&quot;clean_chars&quot;]  = len(cleanText)
+  row[&quot;mda_chars&quot;]    = len(mdaText)
+  row[&quot;mdaStatus&quot;]    = status
+  row[&quot;mdaWordShare&quot;] = rate(row[&quot;mda_wordCount&quot;], row[&quot;wordCount&quot;])
+  rows.append(row)
+
+  print(&quot;{:&gt;3} {:&lt;34} {:&lt;8} clean {:&gt;8,}  MD&amp;A {:&gt;7,}  share {:.3f}  {}&quot;.format(
+      i, row[&quot;fileName&quot;], formType, row[&quot;clean_chars&quot;], row[&quot;mda_chars&quot;],
+      row[&quot;mdaWordShare&quot;], status))
+
+df = pd.DataFrame(rows)
+print(df.shape)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>  1 100_10-K_903419_2025-03-14.txt     10-K     clean  778,601  MD&amp;A 110,294  share 0.148  valid
+  2 10_10-K_1860782_2025-03-25.txt     10-K     clean  642,583  MD&amp;A  69,335  share 0.110  valid
+  3 11_10-K_1860782_2025-03-17.txt     NT 10-K  clean    4,058  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+  4 12_10-K_1890702_2025-03-07.txt     10-K     clean   80,106  MD&amp;A       0  share 0.000  omitted by filer
+  5 13_10-K_1948175_2025-03-10.txt     10-K     clean   75,246  MD&amp;A       0  share 0.000  omitted by filer
+  6 14_10-K_933972_2025-03-28.txt               clean        0  MD&amp;A       0  share 0.000  not an annual report (no form type)
+  7 15_10-K_910638_2025-03-27.txt      10-K     clean  495,696  MD&amp;A  90,727  share 0.193  valid
+  8 16_10-K_910638_2025-03-17.txt      NT 10-K  clean    5,900  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+  9 17_10-K_66740_2025-02-05.txt       10-K     clean  621,076  MD&amp;A  88,196  share 0.157  valid
+ 10 18_10-K_1650648_2025-02-28.txt     10-K     clean  620,551  MD&amp;A  45,274  share 0.074  valid
+ 11 19_10-K_1783875_2025-03-31.txt     NT 10-K  clean    7,073  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 12 1_10-K_1770787_2025-02-13.txt      10-K     clean  511,466  MD&amp;A  45,085  share 0.088  valid
+ 13 20_10-K_1733443_2025-03-31.txt     10-K     clean  281,847  MD&amp;A  33,170  share 0.116  valid
+ 14 21_10-K_1998387_2025-03-13.txt     10-K     clean  578,925  MD&amp;A  51,070  share 0.088  valid
+ 15 22_10-K_1946563_2025-03-27.txt     10-K     clean  514,836  MD&amp;A  46,521  share 0.091  valid
+ 16 23_10-K_1785173_2025-02-27.txt     10-K     clean  467,329  MD&amp;A  42,854  share 0.095  valid
+ 17 24_10-K_1555279_2025-03-07.txt     10-K     clean  517,517  MD&amp;A  70,769  share 0.141  valid
+ 18 25_10-K_1865107_2025-03-06.txt     10-K     clean  415,098  MD&amp;A  52,706  share 0.127  valid
+ 19 26_10-K_1580808_2025-02-25.txt     10-K     clean  393,627  MD&amp;A  35,025  share 0.089  valid
+ 20 27_10-K_2012964_2025-03-11.txt     10-K     clean  216,676  MD&amp;A  17,910  share 0.084  valid
+ 21 28_10-K_824142_2025-02-27.txt      10-K     clean  285,740  MD&amp;A  45,354  share 0.170  valid
+ 22 29_10-K_1876255_2025-03-26.txt     10-K     clean  565,035  MD&amp;A  45,243  share 0.078  valid
+ 23 2_10-K_1877461_2025-03-31.txt      10-K     clean  132,762  MD&amp;A  13,277  share 0.107  valid
+ 24 30_10-K_1634452_2025-03-31.txt     10-K     clean 1,155,554  MD&amp;A  53,398  share 0.064  valid
+ 25 31_10-K_1982701_2025-03-31.txt     10-K     clean  668,320  MD&amp;A  49,408  share 0.080  valid
+ 26 32_10-K_1800_2025-02-21.txt        10-K     clean  380,562  MD&amp;A  72,705  share 0.231  valid
+ 27 33_10-K_318306_2025-03-20.txt      10-K     clean  476,374  MD&amp;A  45,060  share 0.099  valid
+ 28 34_10-K_1018840_2025-03-31.txt     10-K     clean  387,618  MD&amp;A  58,519  share 0.156  valid
+ 29 35_10-K_1173313_2025-03-31.txt     NT 10-K  clean    4,274  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 30 36_10-K_934549_2025-03-17.txt      10-K     clean  642,377  MD&amp;A  85,498  share 0.136  valid
+ 31 37_10-K_1070494_2025-02-27.txt     10-K     clean  516,112  MD&amp;A  48,992  share 0.099  valid
+ 32 38_10-K_899629_2025-02-14.txt      10-K     clean  551,809  MD&amp;A  58,498  share 0.122  valid
+ 33 39_10-K_843006_2025-03-25.txt      10-K     clean  220,011  MD&amp;A  32,568  share 0.152  valid
+ 34 3_10-K_1690080_2025-03-31.txt      10-K     clean  721,493  MD&amp;A  41,615  share 0.058  valid
+ 35 40_10-K_712034_2025-02-21.txt      10-K     clean  364,436  MD&amp;A  46,282  share 0.145  valid
+ 36 41_10-K_1962918_2025-03-19.txt     10-K     clean  730,250  MD&amp;A  74,802  share 0.102  valid
+ 37 42_10-K_949858_2025-03-11.txt      10-K     clean  471,766  MD&amp;A  46,260  share 0.106  valid
+ 38 43_10-K_935036_2025-02-27.txt      10-K     clean  363,373  MD&amp;A  63,619  share 0.189  valid
+ 39 44_10-K_1680062_2025-03-03.txt     10-K     clean  560,506  MD&amp;A  98,706  share 0.187  valid
+ 40 45_10-K_2098_2025-03-06.txt        10-K     clean  196,267  MD&amp;A  16,522  share 0.091  valid
+ 41 46_10-K_715579_2025-03-14.txt      10-K     clean  438,571  MD&amp;A  59,591  share 0.140  valid
+ 42 47_10-K_880984_2025-03-06.txt      10-K     clean  225,783  MD&amp;A  25,899  share 0.119  valid
+ 43 48_10-K_1332551_2025-03-17.txt     10-K     clean  647,141  MD&amp;A 141,235  share 0.233  valid
+ 44 49_10-K_1141284_2025-03-24.txt     10-K     clean  435,306  MD&amp;A  38,474  share 0.091  valid
+ 45 4_10-K_1599407_2025-03-31.txt      10-K     clean  743,048  MD&amp;A  54,581  share 0.075  valid
+ 46 50_10-K_1652935_2025-03-13.txt     10-K     clean  749,667  MD&amp;A  61,833  share 0.084  valid
+ 47 51_10-K_786947_2025-03-26.txt      NT 10-K  clean    5,318  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 48 52_10-K_2032966_2025-03-27.txt     10-K     clean  410,128  MD&amp;A  40,133  share 0.094  valid
+ 49 53_10-K_1637873_2025-02-19.txt     10-K     clean  378,350  MD&amp;A  60,144  share 0.164  valid
+ 50 54_10-K_1938571_2025-03-31.txt     NT 10-K  clean    5,061  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 51 55_10-K_1771910_2025-03-27.txt     10-K     clean  566,383  MD&amp;A  37,800  share 0.065  valid
+ 52 56_10-K_1513525_2025-03-04.txt     10-K     clean  547,829  MD&amp;A  37,772  share 0.070  valid
+ 53 57_10-K_1588014_2025-03-31.txt     10-K     clean  140,784  MD&amp;A  15,304  share 0.113  valid
+ 54 58_10-K_1368514_2025-03-18.txt     10-K     clean  560,635  MD&amp;A  68,336  share 0.128  valid
+ 55 59_10-K_1368514_2025-03-03.txt     NT 10-K  clean    7,921  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 56 5_10-K_34782_2025-02-18.txt        10-K     clean  435,529  MD&amp;A  92,204  share 0.242  valid
+ 57 60_10-K_796343_2025-01-13.txt      10-K     clean  406,290  MD&amp;A  49,479  share 0.127  valid
+ 58 61_10-K_1703056_2025-02-27.txt     10-K     clean  626,936  MD&amp;A  79,896  share 0.136  valid
+ 59 62_10-K_926282_2025-03-03.txt      10-K     clean  615,373  MD&amp;A 122,646  share 0.220  valid
+ 60 63_10-K_1158449_2025-02-26.txt     10-K     clean  301,779  MD&amp;A  46,555  share 0.166  valid
+ 61 64_10-K_927003_2025-02-18.txt      10-K     clean  297,431  MD&amp;A  35,591  share 0.129  valid
+ 62 65_10-K_2488_2025-02-05.txt        10-K     clean  409,755  MD&amp;A  33,018  share 0.089  valid
+ 63 66_10-K_1744494_2025-03-31.txt     NT 10-K  clean    5,070  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 64 67_10-K_1185198_2025-03-28.txt     10-K     clean  116,539  MD&amp;A  19,192  share 0.181  valid
+ 65 68_10-K_931755_2025-03-28.txt      10-K     clean  102,308  MD&amp;A  13,293  share 0.139  valid
+ 66 69_10-K_1023458_2025-03-28.txt     10-K     clean  104,948  MD&amp;A  14,131  share 0.145  valid
+ 67 6_10-K_1600641_2025-03-03.txt      10-K     clean  424,004  MD&amp;A  47,308  share 0.112  valid
+ 68 70_10-K_738214_2025-03-14.txt      10-K     clean  361,302  MD&amp;A  37,446  share 0.111  valid
+ 69 71_10-K_1837607_2025-03-24.txt     10-K     clean  700,511  MD&amp;A  70,875  share 0.106  valid
+ 70 72_10-K_1721781_2025-02-13.txt     10-K     clean 1,656,239  MD&amp;A       0  share 0.000  omitted by filer
+ 71 73_10-K_1775098_2025-03-28.txt     10-K     clean   18,946  MD&amp;A       0  share 0.000  omitted by filer
+ 72 74_10-K_1702494_2025-02-13.txt     10-K     clean 1,656,239  MD&amp;A       0  share 0.000  omitted by filer
+ 73 75_10-K_874761_2025-03-11.txt      10-K     clean 1,002,569  MD&amp;A 135,875  share 0.159  valid
+ 74 76_10-K_874761_2025-03-03.txt      NT 10-K  clean    5,531  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 75 77_10-K_1818644_2025-02-24.txt     10-K     clean  495,213  MD&amp;A  49,443  share 0.103  valid
+ 76 78_10-K_1995648_2025-01-24.txt     10-K     clean  109,110  MD&amp;A   6,765  share 0.067  valid
+ 77 79_10-K_1004434_2025-02-14.txt     10-K     clean  406,130  MD&amp;A  66,182  share 0.177  valid
+ 78 7_10-K_1992508_2025-03-26.txt      10-K     clean  428,073  MD&amp;A  13,064  share 0.031  valid
+ 79 80_10-K_4977_2025-02-26.txt        10-K     clean  820,035  MD&amp;A 144,035  share 0.211  valid
+ 80 81_10-K_1514281_2025-03-04.txt     10-K     clean  751,623  MD&amp;A 112,956  share 0.175  valid
+ 81 82_10-K_880266_2025-02-24.txt      10-K     clean  520,520  MD&amp;A  70,670  share 0.165  valid
+ 82 83_10-K_1098972_2025-03-17.txt     10-K     clean  615,614  MD&amp;A  36,486  share 0.060  valid
+ 83 84_10-K_1439222_2025-02-13.txt     10-K     clean  574,972  MD&amp;A  75,557  share 0.130  valid
+ 84 85_10-K_2011498_2025-03-12.txt     10-K     clean  551,450  MD&amp;A  66,518  share 0.122  valid
+ 85 86_10-K_1423689_2025-02-21.txt     10-K     clean  393,088  MD&amp;A  74,107  share 0.193  valid
+ 86 87_10-K_917251_2025-02-11.txt      10-K     clean  810,801  MD&amp;A  45,723  share 0.113  valid
+ 87 88_10-K_1826397_2025-03-31.txt     NT 10-K  clean    3,748  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 88 89_10-K_1763329_2025-03-31.txt     NT 10-K  clean    3,751  MD&amp;A       0  share 0.000  not an annual report (NT 10-K)
+ 89 8_10-K_1347858_2025-03-20.txt      10-K     clean  349,397  MD&amp;A  32,990  share 0.097  valid
+ 90 90_10-K_2030829_2025-03-27.txt     10-K     clean  186,551  MD&amp;A  16,055  share 0.087  valid
+ 91 91_10-K_946644_2025-03-27.txt      10-K     clean  458,515  MD&amp;A  19,908  share 0.046  valid
+ 92 92_10-K_1487712_2025-02-13.txt     10-K     clean  437,611  MD&amp;A  83,016  share 0.201  valid
+ 93 93_10-K_1272842_2025-02-27.txt     10-K     clean  306,327  MD&amp;A  35,955  share 0.121  valid
+ 94 94_10-K_1086222_2025-02-24.txt     10-K     clean  404,727  MD&amp;A  83,973  share 0.217  valid
+ 95 95_10-K_3153_2025-02-20.txt        10-K     clean 1,652,558  MD&amp;A       0  share 0.000  suspiciously short
+ 96 96_10-K_897077_2025-02-27.txt      10-K     clean  291,288  MD&amp;A  24,246  share 0.096  valid
+ 97 97_10-K_766421_2025-02-14.txt      10-K     clean  373,149  MD&amp;A  39,026  share 0.115  valid
+ 98 98_10-K_819793_2025-02-26.txt      10-K     clean  456,774  MD&amp;A  48,933  share 0.124  valid
+ 99 99_10-K_915913_2025-02-12.txt      10-K     clean  695,694  MD&amp;A 132,687  share 0.205  valid
+100 9_10-K_1950976_2025-03-03.txt      10-K     clean  609,514  MD&amp;A  51,313  share 0.086  valid
+(100, 65)
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 26</div><pre><code># sanity check
+print(df[&quot;mdaStatus&quot;].value_counts().to_string())
+print()
+
+notValid = df.loc[df[&quot;mdaStatus&quot;] != &quot;valid&quot;,
+                  [&quot;fileName&quot;, &quot;formType&quot;, &quot;mdaStatus&quot;, &quot;clean_chars&quot;, &quot;mda_chars&quot;]]
+print(&quot;rows without a usable MD&amp;A:&quot;, len(notValid))
+print(notValid.to_string(index=False))
+print()
+print(df.loc[df[&quot;mdaStatus&quot;] == &quot;valid&quot;,
+             [&quot;clean_chars&quot;, &quot;mda_chars&quot;, &quot;mda_wordCount&quot;,
+              &quot;mda_sentenceCount&quot;, &quot;mdaWordShare&quot;]].describe())</code></pre><details class="cell-output"><summary>Saved output</summary><pre>mdaStatus
+valid                                  82
+not an annual report (NT 10-K)         11
+omitted by filer                        5
+not an annual report (no form type)     1
+suspiciously short                      1
+
+rows without a usable MD&amp;A: 18
+                      fileName formType                           mdaStatus  clean_chars  mda_chars
+11_10-K_1860782_2025-03-17.txt  NT 10-K      not an annual report (NT 10-K)         4058          0
+12_10-K_1890702_2025-03-07.txt     10-K                    omitted by filer        80106          0
+13_10-K_1948175_2025-03-10.txt     10-K                    omitted by filer        75246          0
+ 14_10-K_933972_2025-03-28.txt          not an annual report (no form type)            0          0
+ 16_10-K_910638_2025-03-17.txt  NT 10-K      not an annual report (NT 10-K)         5900          0
+19_10-K_1783875_2025-03-31.txt  NT 10-K      not an annual report (NT 10-K)         7073          0
+35_10-K_1173313_2025-03-31.txt  NT 10-K      not an annual report (NT 10-K)         4274          0
+ 51_10-K_786947_2025-03-26.txt  NT 10-K      not an annual report (NT 10-K)         5318          0
+54_10-K_1938571_2025-03-31.txt  NT 10-K      not an annual report (NT 10-K)         5061          0
+59_10-K_1368514_2025-03-03.txt  NT 10-K      not an annual report (NT 10-K)         7921          0
+66_10-K_1744494_2025-03-31.txt  NT 10-K      not an annual report (NT 10-K)         5070          0
+72_10-K_1721781_2025-02-13.txt     10-K                    omitted by filer      1656239          0
+73_10-K_1775098_2025-03-28.txt     10-K                    omitted by filer        18946          0
+74_10-K_1702494_2025-02-13.txt     10-K                    omitted by filer      1656239          0
+ 76_10-K_874761_2025-03-03.txt  NT 10-K      not an annual report (NT 10-K)         5531          0
+88_10-K_1826397_2025-03-31.txt  NT 10-K      not an annual report (NT 10-K)         3748          0
+89_10-K_1763329_2025-03-31.txt  NT 10-K      not an annual report (NT 10-K)         3751          0
+   95_10-K_3153_2025-02-20.txt     10-K                  suspiciously short      1652558          0
+
+        clean_chars      mda_chars  mda_wordCount  mda_sentenceCount  \
+count  8.200000e+01      82.000000      82.000000          82.000000   
+mean   4.785520e+05   55652.207317    7530.329268         251.475610   
+std    2.017731e+05   30799.512535    4081.140929         131.957459   
+min    1.023080e+05    6765.000000     972.000000          38.000000   
+25%    3.666142e+05   36726.000000    4971.750000         180.500000   
+50%    4.629220e+05   48962.500000    6631.500000         222.500000   
+75%    6.139082e+05   70744.250000    9688.000000         305.250000   
+max    1.155554e+06  144035.000000   19044.000000         685.000000   
+
+       mdaWordShare  
+count     82.000000  
+mean       0.126224  
+std        0.047435  
+min        0.030629  
+25%        0.090624  
+50%        0.117199  
+75%        0.156595  
+max        0.242258  
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 27</div><pre><code>valid = df[df[&quot;mdaStatus&quot;] == &quot;valid&quot;]
+
+print(valid[[&quot;fileName&quot;, &quot;sentenceCount&quot;, &quot;mda_sentenceCount&quot;,
+             &quot;futureSentenceRate&quot;, &quot;mda_futureSentenceRate&quot;,
+             &quot;FOG&quot;, &quot;mda_FOG&quot;, &quot;mda_future_FOG&quot;]].head(10).to_string(index=False))
+print()
+print(&quot;n =&quot;, len(valid), &quot;filings with a real MD&amp;A&quot;)
+print(&quot;mean futureSentenceRate  whole 10-K: {:.4f}&quot;.format(valid[&quot;futureSentenceRate&quot;].mean()))
+print(&quot;mean futureSentenceRate  MD&amp;A      : {:.4f}&quot;.format(valid[&quot;mda_futureSentenceRate&quot;].mean()))
+print(&quot;mean FOG                 whole 10-K: {:.4f}&quot;.format(valid[&quot;FOG&quot;].mean()))
+print(&quot;mean FOG                 MD&amp;A      : {:.4f}&quot;.format(valid[&quot;mda_FOG&quot;].mean()))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>                      fileName  sentenceCount  mda_sentenceCount  futureSentenceRate  mda_futureSentenceRate       FOG   mda_FOG  mda_future_FOG
+100_10-K_903419_2025-03-14.txt           2691                427            0.160164                0.070258 25.113513 24.179568       26.542286
+10_10-K_1860782_2025-03-25.txt           2696                306            0.302300                0.143791 24.250309 23.755204       24.906295
+ 15_10-K_910638_2025-03-27.txt           2115                358            0.134279                0.114525 23.465127 24.591997       26.303622
+  17_10-K_66740_2025-02-05.txt           2382                403            0.106633                0.052109 23.247095 21.898768       21.475383
+18_10-K_1650648_2025-02-28.txt           2533                203            0.355310                0.216749 24.610039 23.738418       27.239150
+ 1_10-K_1770787_2025-02-13.txt           2214                220            0.297200                0.150000 23.468974 22.298233       26.105051
+20_10-K_1733443_2025-03-31.txt           1191                137            0.193955                0.051095 23.838875 24.653733       25.902175
+21_10-K_1998387_2025-03-13.txt           2395                231            0.489770                0.346320 25.614049 23.935763       25.057937
+22_10-K_1946563_2025-03-27.txt           2140                212            0.195794                0.132075 23.573067 22.392141       24.118828
+23_10-K_1785173_2025-02-27.txt           2029                186            0.305076                0.161290 23.442781 23.906143       28.618391
+
+n = 82 filings with a real MD&amp;A
+mean futureSentenceRate  whole 10-K: 0.2193
+mean futureSentenceRate  MD&amp;A      : 0.1512
+mean FOG                 whole 10-K: 23.3401
+mean FOG                 MD&amp;A      : 22.6212
+</pre></details></section><section class="cell markdown-cell"><h1 id="pickle-dataset">Pickle dataset</h1>
+</section><section class="cell"><div class="notebook-label">Cell 29</div><pre><code>PICKLE_PATH = &quot;/content/drive/MyDrive/Fall 2026 Text Mining/week 06/Lanqing Jia/dataFrame.pkl&quot;
+
+df.to_pickle(PICKLE_PATH)
+df.drop(columns=[&quot;cleanText&quot;, &quot;mdaText&quot;]).to_csv(
+    &quot;/content/drive/MyDrive/Fall 2026 Text Mining/week 06/Lanqing Jia/readability_mda.csv&quot;, index=False)
+
+# reload for sanity check
+check = pd.read_pickle(PICKLE_PATH)
+print(check.shape)
+print(len(check.columns), &quot;columns&quot;)
+for c in check.columns:
+  print(&quot; &quot;, c)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>(100, 65)
+65 columns
+  fileName
+  formType
+  wordCount
+  sentenceCount
+  complexWordCount
+  PosWordCount
+  NegWordCount
+  LitWordCount
+  PosRate
+  NegRate
+  LitRate
+  complexRate
+  wordsPerSentence
+  syllablesPerWord
+  FOG
+  future_wordCount
+  future_sentenceCount
+  future_complexWordCount
+  future_PosWordCount
+  future_NegWordCount
+  future_LitWordCount
+  future_PosRate
+  future_NegRate
+  future_LitRate
+  future_complexRate
+  future_wordsPerSentence
+  future_syllablesPerWord
+  future_FOG
+  futureSentenceRate
+  futureWordRate
+  mda_wordCount
+  mda_sentenceCount
+  mda_complexWordCount
+  mda_PosWordCount
+  mda_NegWordCount
+  mda_LitWordCount
+  mda_PosRate
+  mda_NegRate
+  mda_LitRate
+  mda_complexRate
+  mda_wordsPerSentence
+  mda_syllablesPerWord
+  mda_FOG
+  mda_future_wordCount
+  mda_future_sentenceCount
+  mda_future_complexWordCount
+  mda_future_PosWordCount
+  mda_future_NegWordCount
+  mda_future_LitWordCount
+  mda_future_PosRate
+  mda_future_NegRate
+  mda_future_LitRate
+  mda_future_complexRate
+  mda_future_wordsPerSentence
+  mda_future_syllablesPerWord
+  mda_future_FOG
+  mda_futureSentenceRate
+  mda_futureWordRate
+  cleanText
+  mdaText
+  raw_chars
+  clean_chars
+  mda_chars
+  mdaStatus
+  mdaWordShare
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 30</div><pre><code>df.head()</code></pre><details class="cell-output"><summary>Saved output</summary><pre>                         fileName formType  wordCount  sentenceCount  \
+0  100_10-K_903419_2025-03-14.txt     10-K      88892           2691   
+1  10_10-K_1860782_2025-03-25.txt     10-K      88307           2696   
+2  11_10-K_1860782_2025-03-17.txt  NT 10-K        577             12   
+3  12_10-K_1890702_2025-03-07.txt     10-K      11208            385   
+4  13_10-K_1948175_2025-03-10.txt     10-K      10338            308   
+
+   complexWordCount  PosWordCount  NegWordCount  LitWordCount   PosRate  \
+0             26446           467          2015           781  0.005254   
+1             24612           942          2115          1152  0.010667   
+2               119             0             2             9  0.000000   
+3              3221            18           256           225  0.001606   
+4              3195             9            89           148  0.000871   
+
+    NegRate  ...  mda_future_FOG  mda_futureSentenceRate  mda_futureWordRate  \
+0  0.022668  ...       26.542286                0.070258            0.084086   
+1  0.023951  ...       24.906295                0.143791            0.162352   
+2  0.003466  ...        0.000000                0.000000            0.000000   
+3  0.022841  ...        0.000000                0.000000            0.000000   
+4  0.008609  ...        0.000000                0.000000            0.000000   
+
+                                           cleanText  \
+0  00009034192024-01-012024-12-31\niso4217:USD\n0...   
+1  iso4217:USDxbrli:sharesiso4217:USDxbrli:shares...   
+2  UNITED STATES\nSECURITIES AND EXCHANGE COMMISS...   
+3  UNITED STATES\n\nSECURITIES AND EXCHANGE COMMI...   
+4  UNITED STATES\n\nSECURITIES AND EXCHANGE COMMI...   
+
+                                             mdaText  raw_chars  clean_chars  \
+0  ITEM 7. MANAGEMENT’S DISCUSSION AND ANALYSIS O...   36983584       778601   
+1  Item 7. Management’s Discussion and Analysis o...   12100667       642583   
+2                                                         33635         4058   
+3                                                      16738243        80106   
+4                                                      13253371        75246   
+
+   mda_chars                       mdaStatus  mdaWordShare  
+0     110294                           valid      0.148236  
+1      69335                           valid      0.109787  
+2          0  not an annual report (NT 10-K)      0.000000  
+3          0                omitted by filer      0.000000  
+4          0                omitted by filer      0.000000  
+
+[5 rows x 65 columns]</pre></details></section>
+</main>
+<footer><div class="shell footer-inner"><span>Lanqing Jia · Fall 2026 Text Mining</span><a href="#main">Back to top ↑</a></div></footer>
+</body></html>

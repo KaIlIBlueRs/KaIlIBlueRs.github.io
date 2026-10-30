@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Readability and forward-looking language — Lanqing Jia’s Fall 2026 Text Mining coursework, notebooks, and data.">
+  <title>Readability and forward-looking language | Lanqing Jia</title>
+  <link rel="stylesheet" href="../../assets/projects.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="shell header-inner">
+  <a class="brand" href="../../../">Lanqing Jia</a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="../../../">Home</a><a href="../../../research">Research</a><a href="../../../travel">Travel</a><a href="../../" aria-current="true">Projects</a>
+  </nav>
+</div></header>
+<main id="main" class="shell notebook">
+<p class="eyebrow"><a href="../../#week-05">← All projects</a> / Week 05</p>
+<h1>Readability and forward-looking language</h1><p class="intro">Adds sentence counts, syllable-based complexity measures, and the Gunning Fog index to financial text analysis. Identifies future-oriented sentences and computes parallel sentiment and readability measures for that subset, exporting the results to CSV.</p>
+<div class="actions"><a href="Readability.ipynb" download>Download notebook (.ipynb)</a></div>
+<p class="run-note">Static notebook reader. Code and saved outputs are displayed without running them. Uses pandas and NLTK with punkt_tab, plus the two included dictionaries. To rerun, update the Google Drive paths and provide the raw filing corpus. The supplied results CSV can be explored independently.</p>
+<section class="cell markdown-cell"><p>Add the following to your dataframe:</p>
+
+<ul>
+  <li>Total sentences (use nltk sentence parser)
+  Identify future-oriented sentences by looking for future oriented words</li>
+  <li>FOG</li>
+  <li>Total complex words (for the whole doc and for future tense)   &gt;3 syllables</li>
+  <li>Total Future Sentences</li>
+  <li>every variable/column should have a future version (this doubles the number of columns, e.g. positivity and future_positivity)</li>
+</ul>
+
+<p>Future oriented words:
+Will
+Shall
+May
+Might
+Should
+*Going to</p>
+</section><section class="cell"><div class="notebook-label">Cell 2</div><pre><code>from google.colab import drive
+drive.mount(&#x27;/content/drive&#x27;)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount(&quot;/content/drive&quot;, force_remount=True).
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 3</div><pre><code>import nltk
+nltk.download(&#x27;punkt_tab&#x27;)
+
+import os
+import re
+import glob
+import pandas as pd
+from nltk.tokenize import sent_tokenize, word_tokenize</code></pre><details class="cell-output"><summary>Saved output</summary><pre>[nltk_data] Downloading package punkt_tab to /root/nltk_data...
+[nltk_data]   Unzipping tokenizers/punkt_tab.zip.
+</pre></details></section><section class="cell markdown-cell"><h1 id="syllable-counts">Syllable Counts</h1>
+</section><section class="cell"><div class="notebook-label">Cell 5</div><pre><code>CMUDICT_PATH = &quot;/content/drive/MyDrive/Fall 2026 Text Mining/week 04/cmudict.txt&quot;
+
+cmudict = {}
+with open(CMUDICT_PATH, encoding=&quot;latin-1&quot;) as f:
+  for line in f:
+    if line.startswith(&quot;;;;&quot;):
+      continue
+    cols = line.split()
+    if not cols:
+      continue
+    word = cols[0]
+    if &quot;(&quot; in word:
+      word = word[:word.index(&quot;(&quot;)]
+    cmudict.setdefault(word.lower(), cols[1:])
+
+print(len(cmudict))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>125764
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 6</div><pre><code>def countVowelGroups(word):
+  &quot;&quot;&quot;Fallback syllable estimate for words that are not in CMUdict&quot;&quot;&quot;
+  word = word.lower()
+  groups = re.findall(r&quot;[aeiouy]+&quot;, word)
+  numSyllables = len(groups)
+  if word.endswith(&quot;e&quot;) and not word.endswith((&quot;le&quot;, &quot;ee&quot;, &quot;ye&quot;)) and numSyllables &gt; 1:
+    numSyllables -= 1
+  return max(numSyllables, 1)
+
+
+syllableCache = {}
+
+
+def getSyllables(words):
+  word = words.lower()
+  if word in syllableCache:
+    return syllableCache[word]
+
+  phonemes = cmudict.get(word)
+  if phonemes is None:
+    syllables = countVowelGroups(word)
+  else:
+    numSyllables = sum(1 for p in phonemes if p[-1].isdigit())
+    syllables = numSyllables
+
+  syllableCache[word] = syllables
+  return syllables
+
+
+def isComplexWord(word):
+  return getSyllables(word) &gt; 2
+
+
+print(getSyllables(&quot;Kevin&quot;), isComplexWord(&quot;Kevin&quot;))
+print(getSyllables(&quot;readability&quot;), isComplexWord(&quot;readability&quot;))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>2 False
+5 True
+</pre></details></section><section class="cell markdown-cell"><h1 id="future-sentences">Future Sentences</h1>
+</section><section class="cell"><div class="notebook-label">Cell 8</div><pre><code>FUTURE_WORDS = {&quot;will&quot;, &quot;shall&quot;, &quot;may&quot;, &quot;might&quot;, &quot;should&quot;}
+
+
+def isFuture(sentence, words=None):
+  if words is None:
+    words = [w.lower() for w in word_tokenize(sentence)]
+
+  for word in words:
+    if word in FUTURE_WORDS:
+      return True
+
+  # &quot;going to&quot; is two tokens; NLTK also splits &quot;gonna&quot; into &quot;gon&quot; + &quot;na&quot;
+  for i in range(len(words) - 1):
+    if words[i] == &quot;going&quot; and words[i + 1] == &quot;to&quot;:
+      return True
+    if words[i] == &quot;gon&quot; and words[i + 1] == &quot;na&quot;:
+      return True
+
+  return False
+
+
+text = &quot;NLTK is gonna be a great NLP toolkit. It makes processing text easy! Revenue will grow.&quot;
+for s in sent_tokenize(text):
+  print(isFuture(s), &quot;|&quot;, s)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>True | NLTK is gonna be a great NLP toolkit.
+False | It makes processing text easy!
+True | Revenue will grow.
+</pre></details></section><section class="cell markdown-cell"><h1 id="sentiment-word-lists-recap">Sentiment word lists recap</h1>
+</section><section class="cell"><div class="notebook-label">Cell 10</div><pre><code>lm = pd.read_csv(&quot;/content/drive/MyDrive/Fall 2026 Text Mining/week 03/Lanqing Jia/Loughran-McDonald_MasterDictionary_1993-2025.csv&quot;)
+lm[&quot;Word&quot;] = lm[&quot;Word&quot;].astype(str).str.lower()
+
+positive  = set(lm.loc[lm[&quot;Positive&quot;]  &gt; 0, &quot;Word&quot;])
+negative  = set(lm.loc[lm[&quot;Negative&quot;]  &gt; 0, &quot;Word&quot;])
+litigious = set(lm.loc[lm[&quot;Litigious&quot;] &gt; 0, &quot;Word&quot;])
+
+print(len(positive), len(negative), len(litigious))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>354 2355 905
+</pre></details></section><section class="cell markdown-cell"><h1 id="word-counter">Word Counter</h1>
+</section><section class="cell"><div class="notebook-label">Cell 12</div><pre><code>WORD_RE = re.compile(r&quot;^[a-z][a-z&#x27;]*$&quot;)
+
+def analyzeDocument(text):
+  stats = {
+      &quot;sentenceCount&quot;: 0, &quot;future_sentenceCount&quot;: 0,
+      &quot;wordCount&quot;: 0,     &quot;future_wordCount&quot;: 0,
+      &quot;complexWordCount&quot;: 0, &quot;future_complexWordCount&quot;: 0,
+      &quot;syllableCount&quot;: 0, &quot;future_syllableCount&quot;: 0,
+      &quot;PosWordCount&quot;: 0,  &quot;future_PosWordCount&quot;: 0,
+      &quot;NegWordCount&quot;: 0,  &quot;future_NegWordCount&quot;: 0,
+      &quot;LitWordCount&quot;: 0,  &quot;future_LitWordCount&quot;: 0,
+  }
+
+  for sentence in sent_tokenize(text):
+    tokens = [w.lower() for w in word_tokenize(sentence)]
+    words = [w for w in tokens if WORD_RE.match(w)]
+    if not words:
+      continue
+
+    future = isFuture(sentence, tokens)
+
+    stats[&quot;sentenceCount&quot;] += 1
+    if future:
+      stats[&quot;future_sentenceCount&quot;] += 1
+
+    for word in words:
+      syl = getSyllables(word)
+      complexWord = syl &gt; 2
+
+      stats[&quot;wordCount&quot;] += 1
+      stats[&quot;syllableCount&quot;] += syl
+      if complexWord:
+        stats[&quot;complexWordCount&quot;] += 1
+      if word in positive:
+        stats[&quot;PosWordCount&quot;] += 1
+      elif word in negative:
+        stats[&quot;NegWordCount&quot;] += 1
+      elif word in litigious:
+        stats[&quot;LitWordCount&quot;] += 1
+
+      if future:
+        stats[&quot;future_wordCount&quot;] += 1
+        stats[&quot;future_syllableCount&quot;] += syl
+        if complexWord:
+          stats[&quot;future_complexWordCount&quot;] += 1
+        if word in positive:
+          stats[&quot;future_PosWordCount&quot;] += 1
+        elif word in negative:
+          stats[&quot;future_NegWordCount&quot;] += 1
+        elif word in litigious:
+          stats[&quot;future_LitWordCount&quot;] += 1
+
+  return stats</code></pre></section><section class="cell"><div class="notebook-label">Cell 13</div><pre><code>def fogIndex(wordCount, sentenceCount, complexWordCount):
+  &quot;&quot;&quot;FOG = 0.4 * (words per sentence + percent complex words)&quot;&quot;&quot;
+  if wordCount == 0 or sentenceCount == 0:
+    return 0.0
+  return 0.4 * ((wordCount / sentenceCount) + 100.0 * (complexWordCount / wordCount))
+
+
+def rate(numerator, denominator):
+  &quot;&quot;&quot;Safe division: a document with no future sentences gets 0 instead of a crash.&quot;&quot;&quot;
+  if denominator == 0:
+    return 0.0
+  return numerator / denominator</code></pre></section><section class="cell markdown-cell"><h1 id="build-the-df">Build the df</h1>
+</section><section class="cell"><div class="notebook-label">Cell 15</div><pre><code>DOCS = &quot;/content/drive/MyDrive/Fall2026TextMining_me/Lanqing10Ks&quot;
+files = sorted(glob.glob(os.path.join(DOCS, &quot;*.txt&quot;)))
+print(len(files), &quot;files&quot;)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>100 files
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 16</div><pre><code>rows = []
+
+for i, path in enumerate(files, 1):
+  text = open(path, &quot;r&quot;, encoding=&quot;utf-8&quot;, errors=&quot;ignore&quot;).read()
+  s = analyzeDocument(text)
+
+  row = {
+      &quot;fileName&quot;: os.path.basename(path),
+
+      # ---- whole document ----
+      &quot;wordCount&quot;:        s[&quot;wordCount&quot;],
+      &quot;sentenceCount&quot;:    s[&quot;sentenceCount&quot;],
+      &quot;complexWordCount&quot;: s[&quot;complexWordCount&quot;],
+      &quot;PosWordCount&quot;:     s[&quot;PosWordCount&quot;],
+      &quot;NegWordCount&quot;:     s[&quot;NegWordCount&quot;],
+      &quot;LitWordCount&quot;:     s[&quot;LitWordCount&quot;],
+      &quot;PosRate&quot;:          rate(s[&quot;PosWordCount&quot;], s[&quot;wordCount&quot;]),
+      &quot;NegRate&quot;:          rate(s[&quot;NegWordCount&quot;], s[&quot;wordCount&quot;]),
+      &quot;LitRate&quot;:          rate(s[&quot;LitWordCount&quot;], s[&quot;wordCount&quot;]),
+      &quot;complexRate&quot;:      rate(s[&quot;complexWordCount&quot;], s[&quot;wordCount&quot;]),
+      &quot;wordsPerSentence&quot;: rate(s[&quot;wordCount&quot;], s[&quot;sentenceCount&quot;]),
+      &quot;syllablesPerWord&quot;: rate(s[&quot;syllableCount&quot;], s[&quot;wordCount&quot;]),
+      &quot;FOG&quot;:              fogIndex(s[&quot;wordCount&quot;], s[&quot;sentenceCount&quot;], s[&quot;complexWordCount&quot;]),
+
+      # ---- future-oriented sentences only ----
+      &quot;future_wordCount&quot;:        s[&quot;future_wordCount&quot;],
+      &quot;future_sentenceCount&quot;:    s[&quot;future_sentenceCount&quot;],
+      &quot;future_complexWordCount&quot;: s[&quot;future_complexWordCount&quot;],
+      &quot;future_PosWordCount&quot;:     s[&quot;future_PosWordCount&quot;],
+      &quot;future_NegWordCount&quot;:     s[&quot;future_NegWordCount&quot;],
+      &quot;future_LitWordCount&quot;:     s[&quot;future_LitWordCount&quot;],
+      &quot;future_PosRate&quot;:          rate(s[&quot;future_PosWordCount&quot;], s[&quot;future_wordCount&quot;]),
+      &quot;future_NegRate&quot;:          rate(s[&quot;future_NegWordCount&quot;], s[&quot;future_wordCount&quot;]),
+      &quot;future_LitRate&quot;:          rate(s[&quot;future_LitWordCount&quot;], s[&quot;future_wordCount&quot;]),
+      &quot;future_complexRate&quot;:      rate(s[&quot;future_complexWordCount&quot;], s[&quot;future_wordCount&quot;]),
+      &quot;future_wordsPerSentence&quot;: rate(s[&quot;future_wordCount&quot;], s[&quot;future_sentenceCount&quot;]),
+      &quot;future_syllablesPerWord&quot;: rate(s[&quot;future_syllableCount&quot;], s[&quot;future_wordCount&quot;]),
+      &quot;future_FOG&quot;:              fogIndex(s[&quot;future_wordCount&quot;], s[&quot;future_sentenceCount&quot;], s[&quot;future_complexWordCount&quot;]),
+
+      # share of the document that is forward looking
+      &quot;futureSentenceRate&quot;: rate(s[&quot;future_sentenceCount&quot;], s[&quot;sentenceCount&quot;]),
+      &quot;futureWordRate&quot;:     rate(s[&quot;future_wordCount&quot;], s[&quot;wordCount&quot;]),
+  }
+  rows.append(row)
+  print(i, row[&quot;fileName&quot;], &quot;sentences:&quot;, row[&quot;sentenceCount&quot;], &quot;future:&quot;, row[&quot;future_sentenceCount&quot;])
+
+df = pd.DataFrame(rows)
+print(df.shape)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>1 100_10-K_903419_2025-03-14.txt sentences: 16169 future: 751
+2 10_10-K_1860782_2025-03-25.txt sentences: 12013 future: 1252
+3 11_10-K_1860782_2025-03-17.txt sentences: 7 future: 3
+4 12_10-K_1890702_2025-03-07.txt sentences: 617 future: 27
+5 13_10-K_1948175_2025-03-10.txt sentences: 487 future: 24
+6 14_10-K_933972_2025-03-28.txt sentences: 5 future: 1
+7 15_10-K_910638_2025-03-27.txt sentences: 14414 future: 628
+8 16_10-K_910638_2025-03-17.txt sentences: 13 future: 6
+9 17_10-K_66740_2025-02-05.txt sentences: 17194 future: 904
+10 18_10-K_1650648_2025-02-28.txt sentences: 12528 future: 1343
+11 19_10-K_1783875_2025-03-31.txt sentences: 19 future: 7
+12 1_10-K_1770787_2025-02-13.txt sentences: 62233 future: 918
+13 20_10-K_1733443_2025-03-31.txt sentences: 7046 future: 592
+14 21_10-K_1998387_2025-03-13.txt sentences: 10968 future: 3227
+15 22_10-K_1946563_2025-03-27.txt sentences: 16222 future: 699
+16 23_10-K_1785173_2025-02-27.txt sentences: 43557 future: 807
+17 24_10-K_1555279_2025-03-07.txt sentences: 15302 future: 798
+18 25_10-K_1865107_2025-03-06.txt sentences: 8245 future: 586
+19 26_10-K_1580808_2025-02-25.txt sentences: 56800 future: 692
+20 27_10-K_2012964_2025-03-11.txt sentences: 4076 future: 425
+21 28_10-K_824142_2025-02-27.txt sentences: 10690 future: 293
+22 29_10-K_1876255_2025-03-26.txt sentences: 37662 future: 1258
+23 2_10-K_1877461_2025-03-31.txt sentences: 3423 future: 176
+24 30_10-K_1634452_2025-03-31.txt sentences: 37375 future: 1430
+25 31_10-K_1982701_2025-03-31.txt sentences: 12740 future: 1311
+26 32_10-K_1800_2025-02-21.txt sentences: 10531 future: 547
+27 33_10-K_318306_2025-03-20.txt sentences: 8397 future: 737
+28 34_10-K_1018840_2025-03-31.txt sentences: 326583 future: 506
+29 35_10-K_1173313_2025-03-31.txt sentences: 11 future: 4
+30 36_10-K_934549_2025-03-17.txt sentences: 41043 future: 905
+31 37_10-K_1070494_2025-02-27.txt sentences: 23391 future: 1875
+32 38_10-K_899629_2025-02-14.txt sentences: 19296 future: 609
+33 39_10-K_843006_2025-03-25.txt sentences: 91618 future: 314
+34 3_10-K_1690080_2025-03-31.txt sentences: 15539 future: 1186
+35 40_10-K_712034_2025-02-21.txt sentences: 18156 future: 421
+36 41_10-K_1962918_2025-03-19.txt sentences: 52165 future: 1291
+37 42_10-K_949858_2025-03-11.txt sentences: 9909 future: 959
+38 43_10-K_935036_2025-02-27.txt sentences: 8903 future: 464
+39 44_10-K_1680062_2025-03-03.txt sentences: 16374 future: 631
+40 45_10-K_2098_2025-03-06.txt sentences: 6063 future: 276
+41 46_10-K_715579_2025-03-14.txt sentences: 20251 future: 794
+42 47_10-K_880984_2025-03-06.txt sentences: 6382 future: 472
+43 48_10-K_1332551_2025-03-17.txt sentences: 46760 future: 1555
+44 49_10-K_1141284_2025-03-24.txt sentences: 9740 future: 609
+45 4_10-K_1599407_2025-03-31.txt sentences: 15914 future: 1147
+46 50_10-K_1652935_2025-03-13.txt sentences: 17106 future: 1053
+47 51_10-K_786947_2025-03-26.txt sentences: 13 future: 6
+48 52_10-K_2032966_2025-03-27.txt sentences: 1482 future: 417
+49 53_10-K_1637873_2025-02-19.txt sentences: 11176 future: 587
+50 54_10-K_1938571_2025-03-31.txt sentences: 6 future: 4
+51 55_10-K_1771910_2025-03-27.txt sentences: 18484 future: 1073
+52 56_10-K_1513525_2025-03-04.txt sentences: 7524 future: 744
+53 57_10-K_1588014_2025-03-31.txt sentences: 4190 future: 154
+54 58_10-K_1368514_2025-03-18.txt sentences: 11041 future: 677
+55 59_10-K_1368514_2025-03-03.txt sentences: 10 future: 4
+56 5_10-K_34782_2025-02-18.txt sentences: 24102 future: 419
+57 60_10-K_796343_2025-01-13.txt sentences: 15794 future: 708
+58 61_10-K_1703056_2025-02-27.txt sentences: 29629 future: 630
+59 62_10-K_926282_2025-03-03.txt sentences: 26589 future: 773
+60 63_10-K_1158449_2025-02-26.txt sentences: 13312 future: 477
+61 64_10-K_927003_2025-02-18.txt sentences: 10781 future: 415
+62 65_10-K_2488_2025-02-05.txt sentences: 12433 future: 623
+63 66_10-K_1744494_2025-03-31.txt sentences: 11 future: 5
+64 67_10-K_1185198_2025-03-28.txt sentences: 2927 future: 223
+65 68_10-K_931755_2025-03-28.txt sentences: 2583 future: 217
+66 69_10-K_1023458_2025-03-28.txt sentences: 2707 future: 221
+67 6_10-K_1600641_2025-03-03.txt sentences: 9464 future: 696
+68 70_10-K_738214_2025-03-14.txt sentences: 8053 future: 440
+69 71_10-K_1837607_2025-03-24.txt sentences: 26131 future: 991
+70 72_10-K_1721781_2025-02-13.txt sentences: 44963 future: 1096
+71 73_10-K_1775098_2025-03-28.txt sentences: 662 future: 12
+72 74_10-K_1702494_2025-02-13.txt sentences: 44963 future: 1096
+73 75_10-K_874761_2025-03-11.txt sentences: 50065 future: 896
+74 76_10-K_874761_2025-03-03.txt sentences: 11 future: 7
+75 77_10-K_1818644_2025-02-24.txt sentences: 8342 future: 653
+76 78_10-K_1995648_2025-01-24.txt sentences: 3173 future: 138
+77 79_10-K_1004434_2025-02-14.txt sentences: 13226 future: 306
+78 7_10-K_1992508_2025-03-26.txt sentences: 4772 future: 711
+79 80_10-K_4977_2025-02-26.txt sentences: 35598 future: 639
+80 81_10-K_1514281_2025-03-04.txt sentences: 15145 future: 1205
+81 82_10-K_880266_2025-02-24.txt sentences: 115916 future: 601
+82 83_10-K_1098972_2025-03-17.txt sentences: 16927 future: 956
+83 84_10-K_1439222_2025-02-13.txt sentences: 24554 future: 845
+84 85_10-K_2011498_2025-03-12.txt sentences: 8297 future: 1080
+85 86_10-K_1423689_2025-02-21.txt sentences: 24918 future: 553
+86 87_10-K_917251_2025-02-11.txt sentences: 30966 future: 517
+87 88_10-K_1826397_2025-03-31.txt sentences: 6 future: 3
+88 89_10-K_1763329_2025-03-31.txt sentences: 9 future: 3
+89 8_10-K_1347858_2025-03-20.txt sentences: 10532 future: 496
+90 90_10-K_2030829_2025-03-27.txt sentences: 4839 future: 587
+91 91_10-K_946644_2025-03-27.txt sentences: 8108 future: 549
+92 92_10-K_1487712_2025-02-13.txt sentences: 12767 future: 1045
+93 93_10-K_1272842_2025-02-27.txt sentences: 11189 future: 578
+94 94_10-K_1086222_2025-02-24.txt sentences: 10394 future: 656
+95 95_10-K_3153_2025-02-20.txt sentences: 36932 future: 1216
+96 96_10-K_897077_2025-02-27.txt sentences: 20467 future: 291
+97 97_10-K_766421_2025-02-14.txt sentences: 12994 future: 398
+98 98_10-K_819793_2025-02-26.txt sentences: 16930 future: 560
+99 99_10-K_915913_2025-02-12.txt sentences: 44841 future: 1088
+100 9_10-K_1950976_2025-03-03.txt sentences: 11139 future: 1111
+(100, 29)
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 17</div><pre><code>df.head()</code></pre><details class="cell-output"><summary>Saved output</summary><pre>                         fileName  wordCount  sentenceCount  complexWordCount  \
+0  100_10-K_903419_2025-03-14.txt    2546115          16169            227730   
+1  10_10-K_1860782_2025-03-25.txt     696347          12013            134423   
+2  11_10-K_1860782_2025-03-17.txt       1649              7               156   
+3  12_10-K_1890702_2025-03-07.txt     794870            617             49543   
+4  13_10-K_1948175_2025-03-10.txt     609731            487             43194   
+
+   PosWordCount  NegWordCount  LitWordCount   PosRate   NegRate   LitRate  \
+0          8420          6621          7620  0.003307  0.002600  0.002993   
+1          7030          5411          6272  0.010096  0.007771  0.009007   
+2             0            17             9  0.000000  0.010309  0.005458   
+3            50           532           560  0.000063  0.000669  0.000705   
+4            56           381           477  0.000092  0.000625  0.000782   
+
+   ...  future_LitWordCount  future_PosRate  future_NegRate  future_LitRate  \
+0  ...                  914        0.001851        0.002499        0.001716   
+1  ...                 1380        0.009725        0.015250        0.012026   
+2  ...                    9        0.000000        0.010429        0.005521   
+3  ...                   78        0.000029        0.000217        0.000376   
+4  ...                   65        0.000048        0.000249        0.000449   
+
+   future_complexRate  future_wordsPerSentence  future_syllablesPerWord  \
+0            0.047438               709.252996                 1.394010   
+1            0.198116                91.654153                 1.774974   
+2            0.095706               543.333333                 1.534356   
+3            0.054870              7678.777778                 1.412860   
+4            0.070660              6035.333333                 1.443941   
+
+    future_FOG  futureSentenceRate  futureWordRate  
+0   285.598733            0.046447        0.209201  
+1    44.586298            0.104220        0.164790  
+2   221.161554            0.428571        0.988478  
+3  3073.705905            0.043760        0.260831  
+4  2416.959744            0.049281        0.237560  
+
+[5 rows x 29 columns]</pre></details></section><section class="cell"><div class="notebook-label">Cell 18</div><pre><code>df.to_csv(&quot;/content/drive/MyDrive/Fall2026TextMining_me/readability_future.csv&quot;, index=False)</code></pre></section>
+</main>
+<footer><div class="shell footer-inner"><span>Lanqing Jia · Fall 2026 Text Mining</span><a href="#main">Back to top ↑</a></div></footer>
+</body></html>

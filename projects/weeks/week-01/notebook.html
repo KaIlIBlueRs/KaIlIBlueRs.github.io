@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Python foundations — Lanqing Jia’s Fall 2026 Text Mining coursework, notebooks, and data.">
+  <title>Python foundations | Lanqing Jia</title>
+  <link rel="stylesheet" href="../../assets/projects.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="shell header-inner">
+  <a class="brand" href="../../../">Lanqing Jia</a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="../../../">Home</a><a href="../../../research">Research</a><a href="../../../travel">Travel</a><a href="../../" aria-current="true">Projects</a>
+  </nav>
+</div></header>
+<main id="main" class="shell notebook">
+<p class="eyebrow"><a href="../../#week-01">← All projects</a> / Week 01</p>
+<h1>Python foundations</h1><p class="intro">A hands-on notebook exploring Python data types, collections, control flow, functions, and error handling. Small exercises build toward a gradebook analyzer, with an additional example of calling a language model API.</p>
+<div class="actions"><a href="Copy%20of%20Python_Beginners_Tutorial.ipynb" download>Download notebook (.ipynb)</a></div>
+<p class="run-note">Static notebook reader. Code and saved outputs are displayed without running them. Most examples use the Python standard library. The optional API example requires the openai package and an OPENAI_API_KEY environment variable. The published copy removes the embedded credential.</p>
+<section class="cell markdown-cell">
+<h1 id="python-for-absolute-beginners--a-handson-tutorial">Python for Absolute Beginners — A Hands‑On Tutorial</h1>
+
+<p>Welcome! This notebook teaches the <strong>basics of Python</strong> with short explanations and <strong>runnable examples</strong>.<br />
+Every code block is self‑contained — run them one by one and tweak values to see what changes.</p>
+</section><section class="cell markdown-cell"><h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+  <li><a href="#how-to-run-this-notebook">How to Run This Notebook</a></li>
+  <li><a href="#primitive-data-types">Primitive Data Types</a></li>
+  <li><a href="#built-in-collection-types">Built‑in Collection Types</a></li>
+  <li><a href="#numbers-operators">Numbers &amp; Operators</a></li>
+  <li><a href="#strings-slicing">Strings &amp; Slicing</a></li>
+  <li><a href="#control-flow">Control Flow</a></li>
+  <li><a href="#comprehensions">Comprehensions</a></li>
+  <li><a href="#functions-lambdas">Functions &amp; Lambdas</a></li>
+  <li><a href="#exceptions-error-handling">Exceptions &amp; Error Handling</a></li>
+  <li><a href="#pattern-matching-match-case">Pattern Matching (match/case)</a></li>
+  <li><a href="#mini-exercise-gradebook-analyzer">Example: Gradebook Analyzer</a></li>
+</ul>
+</section><section class="cell markdown-cell">
+<h2 id="how-to-run-this-notebook">How to Run This Notebook</h2>
+<p><a id="how-to-run-this-notebook"></a></p>
+
+<ul>
+  <li>Click into a code cell and press <strong>Shift+Enter</strong> (or the ▶️ button) to run it.</li>
+  <li>If something errors, read the message — it’s part of learning! Try changing inputs and re‑running.</li>
+  <li>All examples print output so you can see what each concept does.</li>
+</ul>
+</section><section class="cell markdown-cell">
+<h2 id="primitive-data-types">Primitive Data Types</h2>
+<p><a id="primitive-data-types"></a></p>
+
+<p>Python has a small set of <strong>primitive</strong> (fundamental) types:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Literal Examples</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>int</code></td>
+      <td>Whole numbers</td>
+      <td><code>0</code>, <code>-3</code>, <code>42</code></td>
+    </tr>
+    <tr>
+      <td><code>float</code></td>
+      <td>Decimal numbers (double precision)</td>
+      <td><code>3.14</code>, <code>-0.5</code>, <code>1.0</code></td>
+    </tr>
+    <tr>
+      <td><code>bool</code></td>
+      <td>Boolean values</td>
+      <td><code>True</code>, <code>False</code></td>
+    </tr>
+    <tr>
+      <td><code>str</code></td>
+      <td>Text (Unicode strings)</td>
+      <td><code>"hello"</code>, <code>'world'</code></td>
+    </tr>
+    <tr>
+      <td><code>NoneType</code></td>
+      <td>The absence of a value</td>
+      <td><code>None</code></td>
+    </tr>
+    <tr>
+      <td><code>complex</code></td>
+      <td>Complex numbers <em>(optional)</em></td>
+      <td><code>3+4j</code>, <code>-2j</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Tip:</strong> Use <code>type(x)</code> to see a value’s type.</p>
+</section><section class="cell"><div class="notebook-label">Cell 6</div><pre><code># Try changing these values and re-run
+a = 42           # int
+b = 3.14         # float
+c = True         # bool
+d = &quot;hello&quot;      # str
+e = None         # NoneType
+z = 2 + 3j       # complex
+
+print(&quot;a&quot;, &quot;b&quot;, &quot;f&quot;)
+print(&quot;Lanqing&quot;)
+print(a, type(a))
+print(b, type(b))
+print(c, type(c))
+print(d, type(d))
+print(e, type(e))
+print(z, type(z))
+
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>a b f
+Lanqing
+42 &lt;class &#x27;int&#x27;&gt;
+3.14 &lt;class &#x27;float&#x27;&gt;
+True &lt;class &#x27;bool&#x27;&gt;
+hello &lt;class &#x27;str&#x27;&gt;
+None &lt;class &#x27;NoneType&#x27;&gt;
+(2+3j) &lt;class &#x27;complex&#x27;&gt;
+</pre></details></section><section class="cell markdown-cell">
+<h2 id="builtin-collection-types">Built‑in Collection Types</h2>
+<p><a id="built-in-collection-types"></a></p>
+
+<p>Python includes rich <strong>built‑in containers</strong>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Ordered?</th>
+      <th style="text-align: right">Mutable?</th>
+      <th style="text-align: right">Duplicates?</th>
+      <th>Example</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>list</code></td>
+      <td>Yes</td>
+      <td style="text-align: right"><strong>Yes</strong></td>
+      <td style="text-align: right">Yes</td>
+      <td><code>[1, 2, 2, 3]</code></td>
+    </tr>
+    <tr>
+      <td><code>tuple</code></td>
+      <td>Yes</td>
+      <td style="text-align: right">No</td>
+      <td style="text-align: right">Yes</td>
+      <td><code>(1, 2, 3)</code></td>
+    </tr>
+    <tr>
+      <td><code>dict</code></td>
+      <td>Keys: no order requirement (preserves insertion order); values mapped by keys</td>
+      <td style="text-align: right"><strong>Yes</strong></td>
+      <td style="text-align: right">Keys unique</td>
+      <td><code>{"a": 1, "b": 2}</code></td>
+    </tr>
+    <tr>
+      <td><code>set</code></td>
+      <td>No</td>
+      <td style="text-align: right"><strong>Yes</strong></td>
+      <td style="text-align: right"><strong>No</strong> (unique elements)</td>
+      <td><code>{1, 2, 3}</code></td>
+    </tr>
+    <tr>
+      <td><code>frozenset</code></td>
+      <td>No</td>
+      <td style="text-align: right">No</td>
+      <td style="text-align: right"><strong>No</strong></td>
+      <td><code>frozenset({1, 2, 3})</code></td>
+    </tr>
+    <tr>
+      <td><code>range</code></td>
+      <td>Sequence of numbers</td>
+      <td style="text-align: right">No</td>
+      <td style="text-align: right">N/A</td>
+      <td><code>range(0, 5)</code></td>
+    </tr>
+    <tr>
+      <td><code>bytes</code></td>
+      <td>Immutable bytes</td>
+      <td style="text-align: right">No</td>
+      <td style="text-align: right">N/A</td>
+      <td><code>b"Hi"</code></td>
+    </tr>
+    <tr>
+      <td><code>bytearray</code></td>
+      <td>Mutable bytes</td>
+      <td style="text-align: right"><strong>Yes</strong></td>
+      <td style="text-align: right">N/A</td>
+      <td><code>bytearray(b"Hi")</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Use these to group and structure data effectively.</p>
+</section><section class="cell"><div class="notebook-label">Cell 8</div><pre><code>myList = [&quot;me&quot;, &quot;Perma&quot;, &quot;Frost&quot;]
+print(myList)
+
+myList.append(&quot;Seb&quot;)
+print(myList)
+removed = myList.pop(1)
+print(removed)
+print(myList)
+myList.append(&quot;me&quot;)
+print(myList)
+myList.remove(&quot;me&quot;)
+print(myList)
+
+for person in myList:
+  print(person)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>[&#x27;me&#x27;, &#x27;Perma&#x27;, &#x27;Frost&#x27;]
+[&#x27;me&#x27;, &#x27;Perma&#x27;, &#x27;Frost&#x27;, &#x27;Seb&#x27;]
+Perma
+[&#x27;me&#x27;, &#x27;Frost&#x27;, &#x27;Seb&#x27;]
+[&#x27;me&#x27;, &#x27;Frost&#x27;, &#x27;Seb&#x27;, &#x27;me&#x27;]
+[&#x27;Frost&#x27;, &#x27;Seb&#x27;, &#x27;me&#x27;]
+Frost
+Seb
+me
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 9</div><pre><code>newList = [1, 2, 3, 4, 4, 5, 5, 6]
+newList.append(8)
+newList.append([10, 11, 12])
+print(newList)
+print(newList[-1][2])
+print(myList)
+print(myList[1][-1])
+print(myList[1][1:])</code></pre><details class="cell-output"><summary>Saved output</summary><pre>[1, 2, 3, 4, 4, 5, 5, 6, 8, [10, 11, 12]]
+12
+[&#x27;Frost&#x27;, &#x27;Seb&#x27;, &#x27;me&#x27;]
+b
+eb
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 10</div><pre><code># Lists (mutable, ordered)
+nums = [10, 20, 20, 30, &quot;twenty&quot;, [1,2,3]]
+print(nums)
+nums.append(40)
+print (nums)
+removed = nums.pop(1)   # remove at index 1
+#print(&quot;list:&quot;, nums, &quot;| removed:&quot;, removed)
+print(nums[5])
+
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>[10, 20, 20, 30, &#x27;twenty&#x27;, [1, 2, 3]]
+[10, 20, 20, 30, &#x27;twenty&#x27;, [1, 2, 3], 40]
+40
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 11</div><pre><code># Tuples (immutable, ordered)
+point = (3, 4)
+print(&quot;tuple:&quot;, point)
+print (type(point))
+print(type(point[1]))
+print(point[0])
+
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>tuple: (3, 4)
+&lt;class &#x27;tuple&#x27;&gt;
+&lt;class &#x27;int&#x27;&gt;
+3
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 12</div><pre><code># Dicts (key -&gt; value mapping)
+person = {&quot;name&quot;: &quot;Ada&quot;, &quot;role&quot;: &quot;Engineer&quot;, &quot;hireDate&quot;:&quot;1/1/2025&quot;, &quot;Pets&quot;:[&quot;fido&quot;, &quot;fifi&quot;, &quot;goldy&quot;]}
+#person[&quot;role&quot;] = &quot;Chief Engineer&quot;  # update value
+print(&quot;dict keys:&quot;, list(person.keys()))
+print(&quot;dict items:&quot;, list(person.items()))
+print(person[&quot;hireDate&quot;])
+
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>dict keys: [&#x27;name&#x27;, &#x27;role&#x27;, &#x27;hireDate&#x27;, &#x27;Pets&#x27;]
+dict items: [(&#x27;name&#x27;, &#x27;Ada&#x27;), (&#x27;role&#x27;, &#x27;Engineer&#x27;), (&#x27;hireDate&#x27;, &#x27;1/1/2025&#x27;), (&#x27;Pets&#x27;, [&#x27;fido&#x27;, &#x27;fifi&#x27;, &#x27;goldy&#x27;])]
+1/1/2025
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 13</div><pre><code># Sets (unique items, unordered)
+alist = [1,1,2,3,4,5,5]
+setList = list(set(alist))
+print(setList)
+unique = {2, 2, 3, 3, 4}
+unique.add(5)
+print(&quot;set:&quot;, unique)
+
+a = 1
+b = str(a)
+
+print(type(a))
+print(type(b))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>[1, 2, 3, 4, 5]
+set: {2, 3, 4, 5}
+&lt;class &#x27;int&#x27;&gt;
+&lt;class &#x27;str&#x27;&gt;
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 14</div><pre><code># Range (doesn&#x27;t materialize numbers until iterated)
+r = range(0,5,3)
+print(r)
+r = range(2, 10, 2)
+print(&quot;range as list:&quot;, list(r))
+r = range(0,5)
+print(list(r))
+
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>range(0, 5, 3)
+range as list: [2, 4, 6, 8]
+[0, 1, 2, 3, 4]
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 15</div><pre><code># Bytes &amp; bytearray
+b = b&quot;Hello&quot;
+ba = bytearray(b&quot;Hi&quot;)
+ba[0] = ord(&quot;B&quot;)
+print(&quot;bytes:&quot;, b, &quot;| bytearray:&quot;, ba)
+
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>bytes: b&#x27;Hello&#x27; | bytearray: bytearray(b&#x27;Bi&#x27;)
+</pre></details></section><section class="cell markdown-cell">
+<h2 id="numbers--operators">Numbers &amp; Operators</h2>
+<p><a id="numbers-operators"></a></p>
+
+<p>Common numeric operators:</p>
+
+<ul>
+  <li><code>+</code> add, <code>-</code> subtract, <code>*</code> multiply, <code>/</code> divide → <strong>float</strong></li>
+  <li><code>//</code> floor division (truncates toward negative infinity)</li>
+  <li><code>%</code> modulo (remainder), <code>**</code> exponent</li>
+  <li>Comparisons: <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code></li>
+</ul>
+</section><section class="cell"><div class="notebook-label">Cell 17</div><pre><code>x, y = 7, 3
+print(&quot;x + y =&quot;, x + y)
+print(&quot;x - y =&quot;, x - y)
+print(&quot;x * y =&quot;, x * y)
+print(&quot;x / y =&quot;, x / y)     # float
+print(&quot;x // y =&quot;, x // y)   # floor division
+print(&quot;x % y =&quot;, x % y)     # modulo
+print(&quot;x ** y =&quot;, x ** y)   # exponent
+
+print(&quot;comparisons:&quot;, x == y, x != y, x &gt; y, x &lt;= y)
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>x + y = 10
+x - y = 4
+x * y = 21
+x / y = 2.3333333333333335
+x // y = 2
+x % y = 1
+x ** y = 343
+comparisons: False True True False
+</pre></details></section><section class="cell markdown-cell">
+<h2 id="strings--slicing">Strings &amp; Slicing</h2>
+<p><a id="strings-slicing"></a></p>
+
+<p>A string is a sequence of characters. <strong>Slicing</strong> lets you grab parts of sequences (strings, lists, tuples):</p>
+
+<ul>
+  <li><code>seq[start:stop]</code> → from <code>start</code> to <code>stop-1</code></li>
+  <li><code>seq[start:stop:step]</code> → jump by <code>step</code></li>
+  <li>Omit any part to use defaults (<code>start=0</code>, <code>stop=len(seq)</code>, <code>step=1</code>)</li>
+  <li>Negative indices count from the end.</li>
+</ul>
+
+<p>Try these and experiment!</p>
+</section><section class="cell"><div class="notebook-label">Cell 19</div><pre><code>text = &quot;Hello, World!&quot;
+print(&quot;Original:&quot;, text)
+print(&quot;text[0:5]  -&gt;&quot;, text[0:5])    # &#x27;Hello&#x27;
+print(&quot;text[7:]   -&gt;&quot;, text[7:])     # &#x27;World!&#x27;
+print(&quot;text[:5]   -&gt;&quot;, text[:5])     # &#x27;Hello&#x27;
+print(&quot;text[::2]  -&gt;&quot;, text[::2])    # &#x27;Hlo ol!&#x27;
+print(&quot;text[::-1] -&gt;&quot;, text[::-1])   # reverse string
+
+alist = [1,2,3,4,5]
+print(alist[-2:])
+
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>Original: Hello, World!
+text[0:5]  -&gt; Hello
+text[7:]   -&gt; World!
+text[:5]   -&gt; Hello
+text[::2]  -&gt; Hlo ol!
+text[::-1] -&gt; !dlroW ,olleH
+[4, 5]
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 20</div><pre><code># Slicing lists works the same way
+nums = list(range(10))
+print(&quot;nums:&quot;, nums)
+print(&quot;nums[2:8]  -&gt;&quot;, nums[2:8])
+print(&quot;nums[::3]  -&gt;&quot;, nums[::3])
+print(&quot;nums[1:9:2]-&gt;&quot;, nums[1:9:2])
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>nums: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+nums[2:8]  -&gt; [2, 3, 4, 5, 6, 7]
+nums[::3]  -&gt; [0, 3, 6, 9]
+nums[1:9:2]-&gt; [1, 3, 5, 7]
+</pre></details></section><section class="cell markdown-cell">
+<h2 id="control-flow">Control Flow</h2>
+<p><a id="control-flow"></a></p>
+
+<p>Use <strong>conditionals</strong> and <strong>loops</strong> to control the execution of your program.</p>
+</section><section class="cell markdown-cell"><h3 id="if--elif--else">If / Elif / Else</h3>
+</section><section class="cell"><div class="notebook-label">Cell 23</div><pre><code>score = 50
+if score &gt;= 90:
+    grade = &quot;A&quot;
+elif score &gt;= 80:
+    grade = &quot;B&quot;
+elif score &gt;= 70:
+    grade = &quot;C&quot;
+else:
+    grade = &quot;D/F&quot;
+
+print(f&quot;score={score} -&gt; grade={grade}&quot;)
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>score=50 -&gt; grade=D/F
+</pre></details></section><section class="cell markdown-cell"><h3 id="for-loops-with-range-and-enumerate">For Loops (with <code>range</code> and <code>enumerate</code>)</h3>
+</section><section class="cell"><div class="notebook-label">Cell 25</div><pre><code>fruits = [&quot;apple&quot;, &quot;banana&quot;, &quot;cherry&quot;]
+
+for fruit in fruits:
+    print(fruit)
+
+print(&quot;Using range:&quot;)
+print (len(fruits))
+print (range(len(fruits)))
+for i in range(len(fruits)):
+    print(i)
+    print(i, fruits[i])
+
+</code></pre><details class="cell-output"><summary>Saved output</summary><pre>apple
+banana
+cherry
+Using range:
+3
+range(0, 3)
+0
+0 apple
+1
+1 banana
+2
+2 cherry
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 26</div><pre><code>print(&quot;\nUsing enumerate:&quot;)
+print (enumerate(fruits))
+for item in enumerate(fruits, start=1):
+    print(item)
+
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 27</div><pre><code># Slicing inside a loop
+print(&quot;\nEvery other fruit via slicing:&quot;)
+for item in fruits[::2]:
+    print(item)
+</code></pre></section><section class="cell markdown-cell"><h3 id="while-loops-break-continue-and-loop-else">While Loops, <code>break</code>, <code>continue</code>, and Loop <code>else</code></h3>
+</section><section class="cell"><div class="notebook-label">Cell 29</div><pre><code>
+n = 0
+total = 0
+while True:
+    n += 1
+    if n % 2 == 1:   # skip odd numbers
+        continue
+    total += n
+    print(total)
+    if total &gt;= 20:
+        break
+else:
+    # Runs only if the while loop didn&#x27;t break
+    print(&quot;Loop finished normally.&quot;)
+print(&quot;total:&quot;, total)
+</code></pre></section><section class="cell markdown-cell"><h3 id="any-and-all-shortcircuit-logic"><code>any</code> and <code>all</code> (short‑circuit logic)</h3>
+</section><section class="cell"><div class="notebook-label">Cell 31</div><pre><code>
+checks = [
+    lambda s: len(s) &gt;= 8,
+    lambda s: any(c.isupper() for c in s),
+    lambda s: any(c.islower() for c in s),
+    lambda s: any(c.isdigit() for c in s),
+]
+
+def strong_password(pw):
+    return all(check(pw) for check in checks)
+
+for pw in [&quot;Abc123&quot;, &quot;Abcdef12&quot;, &quot;abcDEF12&quot;]:
+    print(pw, &quot;-&gt;&quot;, strong_password(pw))
+</code></pre></section><section class="cell markdown-cell">
+<h2 id="comprehensions">Comprehensions</h2>
+<p><a id="comprehensions"></a></p>
+
+<p>Comprehensions create new collections concisely.</p>
+
+<ul>
+  <li><strong>List:</strong> <code>[expr for x in iterable if condition]</code></li>
+  <li><strong>Set:</strong> <code>{expr for x in iterable}</code></li>
+  <li><strong>Dict:</strong> <code>{key_expr: val_expr for x in iterable}</code></li>
+  <li><strong>Generator:</strong> <code>(expr for x in iterable)</code> <em>(lazy)</em></li>
+</ul>
+</section><section class="cell"><div class="notebook-label">Cell 33</div><pre><code>
+nums = [1, 2, 3, 4, 5, 6]
+# List comprehension: squares of even numbers
+squares_even = [x*x for x in nums if x % 2 == 0]
+print(&quot;list comp:&quot;, squares_even)
+
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 34</div><pre><code># Set comprehension: lengths of words (unique)
+words = [&quot;apple&quot;, &quot;banana&quot;, &quot;pear&quot;, &quot;banana&quot;]
+lengths = {len(w) for w in words}
+print(&quot;set comp:&quot;, lengths)
+
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 35</div><pre><code># Dict comprehension: map word -&gt; length
+word_len = {w: len(w) for w in words}
+print(&quot;dict comp:&quot;, word_len)
+
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 36</div><pre><code># Nested list comp: flatten a matrix
+matrix = [[1,2,3], [4,5], [6,7,8]]
+flattened = [x for row in matrix for x in row]
+print(&quot;flattened:&quot;, flattened)
+
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 37</div><pre><code># Gentle generator example (use next() or iterate)
+gen = (x*x for x in range(3))
+print(&quot;generator next:&quot;, next(gen), next(gen), next(gen))
+</code></pre></section><section class="cell markdown-cell">
+<h2 id="functions--lambdas">Functions &amp; Lambdas</h2>
+<p><a id="functions-lambdas"></a></p>
+
+<p>Define reusable blocks with <code>def</code>. Use <strong>guard clauses</strong> to fail fast. <strong>Lambdas</strong> are tiny anonymous functions.</p>
+</section><section class="cell"><div class="notebook-label">Cell 39</div><pre><code>
+def safe_divide(a, b=1):
+    &quot;&quot;&quot;Divide a by b; return a message on division by zero.&quot;&quot;&quot;
+    if b == 0:               # guard clause
+        return &quot;undefined (division by zero)&quot;
+    return a / b
+
+print(&quot;10 / 2 =&quot;, safe_divide(10, 2))
+print(&quot;10 / 0 =&quot;, safe_divide(10, 0))
+
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 40</div><pre><code>pip install openai</code></pre></section><section class="cell"><div class="notebook-label">Cell 41</div><pre><code>import os
+OpenAIKey = os.environ[&quot;OPENAI_API_KEY&quot;]
+
+import openai
+
+def tellAJoke():
+  prompt = &quot;Tell me a humorous joke about accounting students.&quot;
+  # Replace &#x27;YOUR_API_KEY&#x27; with your actual OpenAI API key
+  api_key = OpenAIKey
+
+  # Initialize the OpenAI client with the API key
+  client = openai.OpenAI(api_key=api_key)
+
+  try:
+      # Make a chat completions request
+      response = client.chat.completions.create(
+          model=&quot;gpt-5&quot;,  # Or any other desired model
+          messages=[
+              {&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;You are a funny assistant.&quot;},
+              {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}
+          ]
+      )
+
+      # Print the response
+      return (response.choices[0].message.content)
+
+  except openai.APIError as e:
+      print(f&quot;OpenAI API Error: {e}&quot;)
+  except Exception as e:
+      print(f&quot;An unexpected error occurred: {e}&quot;)
+
+print (tellAJoke())
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 42</div><pre><code># Default args, *args, **kwargs
+def describe_person(name, *traits, **details):
+    print(&quot;Name:&quot;, name)
+    if traits:
+        print(&quot;Traits:&quot;, &quot;, &quot;.join(traits))
+    if details:
+        print(&quot;Details:&quot;, details)
+
+describe_person(&quot;Ada&quot;, &quot;curious&quot;, &quot;methodical&quot;, role=&quot;Engineer&quot;, year=1843)
+
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 43</div><pre><code># Lambdas with map/filter/sorted
+nums = [1, 2, 3, 4, 5]
+squares = list(map(lambda x: x*x, nums))
+evens = list(filter(lambda n: n % 2 == 0, nums))
+words = [&quot;apple&quot;, &quot;kiwi&quot;, &quot;banana&quot;, &quot;pear&quot;]
+sorted_by_len = sorted(words, key=lambda w: len(w))
+print(&quot;squares:&quot;, squares)
+print(&quot;evens:&quot;, evens)
+print(&quot;sorted_by_len:&quot;, sorted_by_len)
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 44</div><pre><code>nums = [1, 2, 3, 4, 5]
+
+def square(x):
+    return x * x
+
+squares = list(map(square, nums))
+
+print (squares)
+</code></pre></section><section class="cell markdown-cell">
+<h2 id="exceptions--error-handling">Exceptions &amp; Error Handling</h2>
+<p><a id="exceptions-error-handling"></a></p>
+
+<p>Use <code>try / except / else / finally</code> to handle errors gracefully. Use <code>raise</code> to signal errors.</p>
+</section><section class="cell"><div class="notebook-label">Cell 46</div><pre><code>
+def to_int(s):
+    try:
+        value = int(s)
+    except ValueError:
+        print(f&quot;Cannot convert {s!r} to int.&quot;)
+        return None
+    else:
+        # runs only if no exception
+        return value
+    finally:
+        print(&quot;Attempted conversion.&quot;)
+
+print(&quot;OK  :&quot;, to_int(&quot;123&quot;))
+print(&quot;Fail:&quot;, to_int(&quot;12.3&quot;))
+
+</code></pre></section><section class="cell"><div class="notebook-label">Cell 47</div><pre><code>def sqrt_nonneg(x):
+    if x &lt; 0:
+        raise ValueError(&quot;x must be non‑negative&quot;)
+    return x ** 0.5
+
+try:
+    print(sqrt_nonneg(9))
+    print(sqrt_nonneg(-1))
+except ValueError as err:
+    print(&quot;Caught error:&quot;, err)
+</code></pre></section><section class="cell markdown-cell">
+<h2 id="example-gradebook-analyzer">Example: Gradebook Analyzer</h2>
+<p><a id="mini-exercise-gradebook-analyzer"></a></p>
+
+<p><em>Goal:</em> Given a list of scores, print each student’s <strong>letter grade</strong>, class <strong>average</strong>, and the <strong>top 3</strong> scores.<br />
+This pulls together numbers, lists, slicing, conditionals, sorting, and comprehensions.</p>
+</section><section class="cell"><div class="notebook-label">Cell 49</div><pre><code>
+scores = [87, 92, 76, 100, 68, 84, 91, 73, 88]
+
+def letter(n):
+    if   n &gt;= 90: return &quot;A&quot;
+    elif n &gt;= 80: return &quot;B&quot;
+    elif n &gt;= 70: return &quot;C&quot;
+    elif n &gt;= 60: return &quot;D&quot;
+    else:         return &quot;F&quot;
+
+# Print each score with its letter
+for i, s in enumerate(scores, start=1):
+    print(f&quot;Student {i}: {s} -&gt; {letter(s)}&quot;)
+
+# Average (float)
+avg = sum(scores) / len(scores)
+
+# Top 3 using slicing after sorting (descending)
+top3 = sorted(scores, reverse=True)[:3]
+print(&quot;\nAverage:&quot;, round(avg, 2))
+print(&quot;Top 3  :&quot;, top3)
+
+# Bonus: dictionary mapping score -&gt; letter using a dict comprehension
+grade_map = {s: letter(s) for s in scores}
+print(&quot;Grade map:&quot;, grade_map)
+</code></pre></section>
+</main>
+<footer><div class="shell footer-inner"><span>Lanqing Jia · Fall 2026 Text Mining</span><a href="#main">Back to top ↑</a></div></footer>
+</body></html>

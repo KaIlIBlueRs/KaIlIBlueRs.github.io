@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Structuring earnings-call transcripts — Lanqing Jia’s Fall 2026 Text Mining coursework, notebooks, and data.">
+  <title>Structuring earnings-call transcripts | Lanqing Jia</title>
+  <link rel="stylesheet" href="../../assets/projects.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="shell header-inner">
+  <a class="brand" href="../../../">Lanqing Jia</a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="../../../">Home</a><a href="../../../research">Research</a><a href="../../../travel">Travel</a><a href="../../" aria-current="true">Projects</a>
+  </nav>
+</div></header>
+<main id="main" class="shell notebook">
+<p class="eyebrow"><a href="../../#week-07">← All projects</a> / Week 07</p>
+<h1>Structuring earnings-call transcripts</h1><p class="intro">Collects 200 earnings calls and organizes their content into linked call-level and speaker-turn tables. Separates prepared remarks from Q&amp;A and reviews calls where the initial boundary-detection rule fails; the saved run reports 8,796 speaker turns.</p>
+<div class="actions"><a href="EarningsCall.ipynb" download>Download notebook (.ipynb)</a></div>
+<p class="run-note">Static notebook reader. Code and saved outputs are displayed without running them. Uses requests, Beautiful Soup, pandas, and Google Drive paths. The generated DF1.csv, DF2.csv, and transcript text files were not included in my supplied folder. Saved outputs and the notes on 22 undetected Q&amp;A boundaries are preserved in the notebook.</p>
+<section class="cell markdown-cell"><p>Automatically go through ten pages of earnings calls…</p>
+
+<p>https://www.fool.com/earnings-call-transcripts/</p>
+
+<p>https://www.fool.com/earnings-call-transcripts/page/10/</p>
+
+<p>And download the 20 earning calls on each page.</p>
+
+<p>For each earnings call:</p>
+
+<ul>
+  <li>Split the call into parts: prepared remarks, and Q&amp;As</li>
+  <li>For each part, identify the speakers and their text (what they say)</li>
+  <li>Store it all in two dataframes
+    <ul>
+      <li>DF1: [EarningsCallID, CompanyName, CallDate, EarningsCallText] - each row is an entire earnings call</li>
+      <li>DF2: [SpeakerTurnID (unique, sequential), EarningsCallID (never change from DF1),  SpeakerName, PreparedOrQA, Text] - each row is a speaker turn in a call</li>
+    </ul>
+  </li>
+</ul>
+</section><section class="cell"><div class="notebook-label">Cell 2</div><pre><code>from google.colab import drive
+drive.mount(&#x27;/content/drive&#x27;)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>Mounted at /content/drive
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 3</div><pre><code>import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+from pathlib import Path
+import time</code></pre></section><section class="cell"><div class="notebook-label">Cell 4</div><pre><code>foolSite = &quot;https://www.fool.com/earnings-call-transcripts/&quot;
+
+callSites = []
+callSites.append(foolSite)
+
+for i in range(9):
+  # print(foolSite + &quot;page/&quot; + str(i+2) + &quot;/&quot;)
+  callSites.append((foolSite + &quot;page/&quot; + str(i+2) + &quot;/&quot;))
+
+print(callSites)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>[&#x27;https://www.fool.com/earnings-call-transcripts/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/2/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/3/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/4/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/5/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/6/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/7/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/8/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/9/&#x27;, &#x27;https://www.fool.com/earnings-call-transcripts/page/10/&#x27;]
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 5</div><pre><code>url = callSites[0]
+response = requests.get(url)
+print(response.text[:2000])
+content = response.text</code></pre><details class="cell-output"><summary>Saved output</summary><pre>&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;stylesheet&quot; href=&quot;https://g.foolcdn.com/static/foolcom/_next/static/css/d7011f77077cb8f5.css&quot; data-precedence=&quot;next&quot;/&gt;&lt;link rel=&quot;stylesheet&quot; href=&quot;https://g.foolcdn.com/static/foolcom/_next/static/css/02c67f1af3f6ba77.css&quot; data-precedence=&quot;next&quot;/&gt;&lt;link rel=&quot;stylesheet&quot; href=&quot;https://g.foolcdn.com/static/foolcom/_next/static/css/dd5d352a082118c1.css&quot; data-precedence=&quot;next&quot;/&gt;&lt;link rel=&quot;stylesheet&quot; href=&quot;https://g.foolcdn.com/static/foolcom/_next/static/css/3c638ba177581267.css&quot; data-precedence=&quot;next&quot;/&gt;&lt;link rel=&quot;stylesheet&quot; href=&quot;https://g.foolcdn.com/static/foolcom/_next/static/css/0cd54441d5cc9677.css&quot; data-precedence=&quot;next&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;script&quot; fetchPriority=&quot;low&quot; href=&quot;https://g.foolcdn.com/static/foolcom/_next/static/chunks/webpack-024da2c289f091bc.js&quot;/&gt;&lt;script src=&quot;https://g.foolcdn.com/static/foolcom/_next/static/chunks/4bd1b696-5cd00193ecc7ed4f.js&quot; async=&quot;&quot;&gt;&lt;/script&gt;&lt;script src=&quot;https://g.foolcdn.com/static/foolcom/_next/static/chunks/9da6db1e-3db5681b4f28ad13.js&quot; async=&quot;&quot;&gt;&lt;/script&gt;&lt;script src=&quot;https://g.foolcdn.com/static/foolcom/_next/static/chunks/4956-07da604e463740f2.js&quot; async=&quot;&quot;&gt;&lt;/script&gt;&lt;script src=&quot;https://g.foolcdn.com/static/foolcom/_next/static/chunks/main-app-7b153e0495d0738
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 6</div><pre><code>soup = BeautifulSoup(content, &#x27;html.parser&#x27;)
+print(soup.find(&#x27;a&#x27;, {&quot;class&quot;:&quot;text-gray-1100 group hover:no-underline!&quot;}))
+print(soup.find_all(&#x27;a&#x27;, {&quot;class&quot;:&quot;text-gray-1100 group hover:no-underline!&quot;}))
+len(soup.find_all(&#x27;a&#x27;, {&quot;class&quot;:&quot;text-gray-1100 group hover:no-underline!&quot;}))
+type(soup.find_all(&#x27;a&#x27;, {&quot;class&quot;:&quot;text-gray-1100 group hover:no-underline!&quot;}))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>&lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/fastenal-fast-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Fastenal (FAST) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Revenue surged 15.5% as large customer wins and digital sales drove market share gains.&lt;/div&gt;&lt;/a&gt;
+[&lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/fastenal-fast-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Fastenal (FAST) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Revenue surged 15.5% as large customer wins and digital sales drove market share gains.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/blackrock-blk-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;BlackRock (BLK) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Record $7.8B revenue and $15.5T AUM as AI infrastructure demand reshapes asset management.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/morgan-stanley-ms-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Morgan Stanley (MS) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Record wealth assets hit $10.5 trillion as equities revenue surged 41% year over year.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/sono-tek-sotk-q2-2027-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Sono-Tek (SOTK) Q2 2027 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Medical market sales surged 289% as customers shifted to commercial manufacturing.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/asml-asml-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;ASML (ASML) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Record €11.7B quarterly sales and €5.0B net income signal robust AI infrastructure demand.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/azz-azz-q2-2027-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;AZZ (AZZ) Q2 2027 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Industrial and infrastructure demand propels record sales; management raises full-year guidance.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/bofa-bac-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;BofA (BAC) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Consumer banking and wealth management offset trading headwinds and regulatory charges.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/14/wells-fargo-wfc-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Wells Fargo (WFC) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Scharf highlights AI scale advantages as bank deploys tokenized deposits.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/fb-financial-fbk-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;FB Financial (FBK) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Net income hit $60.2 million amid loan growth, but mortgage banking faced headwinds.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/jj-jnj-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;J&amp;amp;J (JNJ) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Innovative Medicine drove 7.9% growth as revenue hit $25.4 billion.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/albertsons-aci-q2-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Albertsons (ACI) Q2 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;CEO Morris warns traffic and units lag as retailer launches turnaround strategy.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/unitedhealth-unh-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;UnitedHealth (UNH) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Medical care ratio improved to 88.4% as AI initiatives reduce administrative friction.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/citi-c-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Citi (C) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Citigroup posts best Q3 revenue in a decade, net income surges 40% YoY.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/goldman-sachs-gs-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Goldman Sachs (GS) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Record equities financing and $4.1T assets under supervision discussed.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/dominos-dpz-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Domino&#x27;s (DPZ) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Leadership transition underway as Domino&#x27;s faces consumer spending pressures.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/jpmorgan-chase-jpm-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;JPMorgan Chase (JPM) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Net income surged 6% to $15.3 billion as investment banking and markets revenue accelerated.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/13/leifras-lfs-q2-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Leifras (LFS) Q2 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Net income surged 43.5% as Sports School and Social segments both accelerated.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/09/delta-dal-q3-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Delta (DAL) Q3 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Revenue surged 16% on strong travel demand, but fuel costs climbed $500M above guidance.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/09/new-horizon-aircraft-hovr-q1-2027-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;New Horizon Aircraft (HOVR) Q1 2027 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Hybrid-electric demonstrator nears completion as cash runway extends to 24 months.&lt;/div&gt;&lt;/a&gt;, &lt;a class=&quot;text-gray-1100 group hover:no-underline!&quot; href=&quot;/earnings/call-transcripts/2026/10/09/oil-dri-odc-q4-2026-earnings-call-transcript/&quot;&gt;&lt;h5 class=&quot;md:text-h5 text-md mb-[6px] self-center font-medium group-hover:underline md:mb-[4px]&quot;&gt;Oil-Dri (ODC) Q4 2026 Earnings Call Transcript&lt;/h5&gt;&lt;div class=&quot;text-md text-gray-800&quot;&gt;Record net income and cash flow highlight strong execution despite margin pressures.&lt;/div&gt;&lt;/a&gt;]
+</pre><pre>bs4.element.ResultSet</pre></details></section><section class="cell"><div class="notebook-label">Cell 7</div><pre><code>atag = soup.find(&#x27;a&#x27;, {&quot;class&quot;:&quot;text-gray-1100 group hover:no-underline!&quot;})
+atags = soup.find_all(&#x27;a&#x27;, {&quot;class&quot;:&quot;text-gray-1100 group hover:no-underline!&quot;})
+print(atag.attrs)
+print(atag.attrs[&#x27;href&#x27;])
+print(&quot;https://www.fool.com&quot; + atag.attrs[&#x27;href&#x27;])
+print(atags[0].attrs[&#x27;href&#x27;])</code></pre><details class="cell-output"><summary>Saved output</summary><pre>{&#x27;class&#x27;: [&#x27;text-gray-1100&#x27;, &#x27;group&#x27;, &#x27;hover:no-underline!&#x27;], &#x27;href&#x27;: &#x27;/earnings/call-transcripts/2026/10/14/fastenal-fast-q3-2026-earnings-call-transcript/&#x27;}
+/earnings/call-transcripts/2026/10/14/fastenal-fast-q3-2026-earnings-call-transcript/
+https://www.fool.com/earnings/call-transcripts/2026/10/14/fastenal-fast-q3-2026-earnings-call-transcript/
+/earnings/call-transcripts/2026/10/14/fastenal-fast-q3-2026-earnings-call-transcript/
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 8</div><pre><code>for i in atags:
+  call = &quot;https://www.fool.com&quot; + i.attrs[&#x27;href&#x27;]
+  response = requests.get(call)
+  print(response.text[:2000])</code></pre><details class="cell-output"><summary>Saved output</summary><pre>&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+&lt;!DOCTYPE html&gt;&lt;html lang=&quot;en&quot; class=&quot;__className_319f37 __variable_c44347&quot;&gt;&lt;head&gt;&lt;meta charSet=&quot;utf-8&quot;/&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=256 1x, https://g.foolcdn.com/misc-assets/logo-tmf-primary-1-magenta-purple-reversed.svg?_w=320 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=48&amp;amp;op=resize 1x, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ftmf_holdingco_logo_stacked_magenta_royalpurple_rev.png&amp;amp;w=96&amp;amp;op=resize 2x&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; href=&quot;https://g.foolcdn.com/misc-assets/foolcom-sidebar-small-icon.png&quot;/&gt;&lt;link rel=&quot;preload&quot; as=&quot;image&quot; imageSrcSet=&quot;https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=320&amp;amp;op=resize 320w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=384&amp;amp;op=resize 384w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=640&amp;amp;op=resize 640w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=750&amp;amp;op=resize 750w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=828&amp;amp;op=resize 828w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1080&amp;amp;op=resize 1080w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1200&amp;amp;op=resize 1200w, https://g.foolcdn.com/image/?url=https%3A%2F%2Fg.foolcdn.com%2Fmisc-assets%2Ffool-transcripts-logo.png&amp;amp;w=1920&amp;amp;op=resize 1920w, https://g.foolcd
+</pre></details></section><section class="cell markdown-cell"><h1 id="downloading-1-200-calls">Downloading 1-200 calls</h1>
+</section><section class="cell"><div class="notebook-label">Cell 10</div><pre><code>downloadDir = Path(&quot;/content/drive/MyDrive/Fall2026TextMining_me/earnings_calls&quot;)
+downloadDir.mkdir(parents=True, exist_ok=True)</code></pre></section><section class="cell"><div class="notebook-label">Cell 11</div><pre><code># collect 200 call links from pages 1-10
+callURLs = []
+
+for page in range(1, 11):
+  if page == 1:
+    url = &quot;https://www.fool.com/earnings-call-transcripts/&quot;
+  else:
+    url = (&quot;https://www.fool.com/earnings-call-transcripts/page/&quot; + str(page) + &quot;/&quot;)
+
+  response = requests.get(url, timeout=30)
+  response.raise_for_status()
+  soup = BeautifulSoup(response.text, &quot;html.parser&quot;)
+
+  atags = soup.find_all(&quot;a&quot;, {&quot;class&quot;: &quot;text-gray-1100 group hover:no-underline!&quot;})
+
+  for a in atags:
+    callURLs.append(&quot;https://www.fool.com&quot; + a[&quot;href&quot;])
+
+  print(&quot;Page&quot;, page, &quot;:&quot;, len(atags), &quot;calls&quot;)
+  time.sleep(1)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>Page 1 : 20 calls
+Page 2 : 20 calls
+Page 3 : 20 calls
+Page 4 : 20 calls
+Page 5 : 20 calls
+Page 6 : 20 calls
+Page 7 : 20 calls
+Page 8 : 20 calls
+Page 9 : 20 calls
+Page 10 : 20 calls
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 12</div><pre><code>print(len(callURLs)) # check if 200 call links
+print(len(set(callURLs))) # check if any call links are duplicated</code></pre><details class="cell-output"><summary>Saved output</summary><pre>200
+200
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 13</div><pre><code># Download each call and organize rows.
+callRows = []
+speakerRows = []
+needsReview = []
+
+for callID, url in enumerate(callURLs, start=1):
+  response = requests.get(url, timeout=30)
+  response.raise_for_status()
+  soup = BeautifulSoup(response.text, &quot;html.parser&quot;)
+
+  title = soup.find(&quot;h1&quot;).get_text(&quot; &quot;, strip=True)
+  companyName = title.split(&quot; (&quot;)[0]
+
+  dateHeading = soup.find(id=&quot;date&quot;)
+  dateText = dateHeading.find_next_sibling(&quot;p&quot;).get_text(&quot; &quot;, strip=True)
+  callDate = pd.to_datetime(dateText).date().isoformat()
+
+  transcriptHeading = soup.find(id=&quot;full-conference-call-transcript&quot;)
+  paragraphs = transcriptHeading.find_next_siblings(&quot;p&quot;)
+
+  paragraphTexts = []
+
+  for p in paragraphs:
+    paragraphTexts.append(p.get_text(&quot; &quot;, strip=True))
+
+  callText = &quot;\n\n&quot;.join(paragraphTexts)
+
+  callRows.append({
+    &quot;EarningsCallID&quot;: callID,
+    &quot;CompanyName&quot;: companyName,
+    &quot;CallDate&quot;: callDate,
+    &quot;EarningsCallText&quot;: callText,
+  })
+
+  # Save the entire transcript as a text file.
+  (downloadDir / f&quot;call_{callID}.txt&quot;).write_text(callText, encoding=&quot;utf-8&quot;)
+
+  section = &quot;Prepared&quot;
+  currentTurn = None
+
+  for p in paragraphs:
+    text = p.get_text(&quot; &quot;, strip=True)
+    bold = p.find(&quot;strong&quot;)
+
+    if not text:
+      continue
+
+    # A bold label ending with &quot;:&quot; introduces a speaker.
+    if bold and bold.get_text(strip=True).endswith(&quot;:&quot;):
+      label = bold.get_text(&quot; &quot;, strip=True)
+      speakerName = label.rstrip(&quot;:&quot;).strip()
+      speech = text[len(label):].strip()
+
+      # Switch to Q&amp;A when the operator introduces the first question.
+      if (
+        speakerName.lower() == &quot;operator&quot;
+        and &quot;first question&quot; in speech.lower()
+      ):
+        section = &quot;QA&quot;
+
+      # Every speaker label starts a new turn.
+      currentTurn = {
+        &quot;SpeakerTurnID&quot;: len(speakerRows) + 1,
+        &quot;EarningsCallID&quot;: callID,
+        &quot;SpeakerName&quot;: speakerName,
+        &quot;PreparedOrQA&quot;: section,
+        &quot;Text&quot;: speech,
+      }
+      speakerRows.append(currentTurn)
+
+    elif currentTurn is not None:
+      # Continue the same speaker&#x27;s turn across paragraphs.
+      currentTurn[&quot;Text&quot;] += &quot;\n\n&quot; + text
+
+    else:
+      raise ValueError(f&quot;Missing initial speaker label: {url}&quot;)
+
+  # Flag calls where the Q&amp;A transition was not detected.
+  if section != &quot;QA&quot;:
+    needsReview.append((callID, url))
+
+  print(callID, companyName, callDate)
+  time.sleep(1)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>1 Fastenal 2026-10-14
+2 BlackRock 2026-10-14
+3 Morgan Stanley 2026-10-14
+4 Sono-Tek 2026-10-14
+5 ASML 2026-10-14
+6 AZZ 2026-10-14
+7 BofA 2026-10-14
+8 Wells Fargo 2026-10-13
+9 FB Financial 2026-10-13
+10 J&amp;J 2026-10-13
+11 Albertsons 2026-10-13
+12 UnitedHealth 2026-10-13
+13 Citi 2026-10-13
+14 Goldman Sachs 2026-10-13
+15 Domino&#x27;s 2026-10-13
+16 JPMorgan Chase 2026-10-13
+17 Leifras 2026-10-08
+18 Delta 2026-10-09
+19 New Horizon Aircraft 2026-10-09
+20 Oil-Dri 2026-10-09
+21 Helen of Troy 2026-10-08
+22 Park Aerospace 2026-10-08
+23 NovaGold 2026-10-08
+24 Byrna 2026-10-08
+25 Tilray 2026-10-08
+26 PepsiCo 2026-10-08
+27 AngioDynamics 2026-10-08
+28 Richardson Electronics 2026-10-08
+29 Levi Strauss 2026-10-07
+30 RGP 2026-10-07
+31 Applied Digital 2026-10-07
+32 Constellation Brands 2026-10-07
+33 Worthington Steel 2026-10-07
+34 Saratoga Investment 2026-10-07
+35 Neogen 2026-10-06
+36 Penguin Solutions 2026-10-06
+37 RPM 2026-10-06
+38 Lamb Weston 2026-10-06
+39 Apogee 2026-10-06
+40 Yiren Digital 2026-09-30
+41 Nike 2026-10-01
+42 McCormick 2026-10-01
+43 Accenture 2026-10-01
+44 Acuity 2026-10-01
+45 Bassett Furniture 2026-10-01
+46 Conagra 2026-09-30
+47 Progress 2026-09-30
+48 Micron 2026-09-30
+49 FactSet 2026-09-30
+50 Jabil 2026-09-30
+51 Cal-Maine Foods 2026-09-30
+52 AAR 2026-09-29
+53 Moving iMage 2026-09-28
+54 CarMax 2026-09-29
+55 Uranium Energy 2026-09-29
+56 Concentrix 2026-09-29
+57 Carnival 2026-09-29
+58 Inventiva 2026-09-28
+59 Legacy Education 2026-09-24
+60 Scholastic 2026-09-24
+61 Costco 2026-09-24
+62 Precision Optics 2026-09-28
+63 Palatin 2026-09-28
+64 NetSol 2026-09-28
+65 ReposiTrak 2026-09-28
+66 Vail Resorts 2026-09-28
+67 IDT 2026-09-28
+68 Addex 2026-09-28
+69 TD SYNNEX 2026-09-24
+70 Uxin 2026-09-24
+71 BlackBerry 2026-09-24
+72 Darden 2026-09-24
+73 Fuller 2026-09-24
+74 AtlasClear 2026-09-24
+75 NeoVolta 2026-09-23
+76 Stitch Fix 2026-09-23
+77 Paychex 2026-09-23
+78 Cintas 2026-09-23
+79 General Mills 2026-09-23
+80 Cracker Barrel 2026-09-23
+81 Worthington 2026-09-23
+82 KB Home 2026-09-22
+83 Here 2026-09-22
+84 MLKN Q1 2027 Earnings Call Transcript 2026-09-22
+85 AutoZone 2026-09-22
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 17, 2026 at 5:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>86 Upexi 2026-09-17
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 17, 2026, at 8 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>87 Innate Pharma 2026-09-17
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 17, 2026 at 11 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>88 Lennar 2026-09-17
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 15, 2026 at 11:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>89 High Tide 2026-09-15
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 16, 2026 at 5:00 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>90 Aeluma 2026-09-16
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 16, 2026 at 8:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>91 Luxe 2026-09-16
+92 Ispire 2026-09-16
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 16, 2026 at 11 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>93 Evolution Petroleum 2026-09-16
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 15, 2026 at 11:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>94 Forgent Power Solutions 2026-09-15
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 15, 2026 at 8:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>95 Vera Bradley 2026-09-15
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 15, 2026 at 8:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>96 51Talk 2026-09-15
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Friday, Sept. 11, 2026 at 8:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>97 Rent the Runway 2026-09-11
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Monday, Sept. 14, 2026 at 4:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>98 ABAT Q4 2026 Earnings Call Transcript 2026-09-14
+99 Bioceres 2026-09-15
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Monday, Sept. 14, 2026, at 5 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>100 MindWalk 2026-09-14
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Monday, Sept. 14, 2026 at 5:00 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>101 Dave &amp; Buster&#x27;s 2026-09-14
+102 Radiant Logistics 2026-09-14
+103 Kestra 2026-09-14
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Monday, Sept. 14, 2026 at 8:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>104 Hain Celestial 2026-09-14
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Monday, Sept. 14, 2026 at 8:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>105 RF Industries 2026-09-14
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Monday, Sept. 14, 2026 at 10:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>106 Coda Octopus 2026-09-14
+107 CoinShares 2026-09-14
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Friday, September 11, 2026 at 8 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>108 Kroger 2026-09-11
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Friday, Sept. 11, 2026 at 9:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+/tmp/ipykernel_2276/904308454.py:16: UserWarning: Parsing dates in %A, Sept. %d, %Y at %m:%M a.m. ET format when dayfirst=False (the default) was specified. Pass `dayfirst=True` or specify a format to silence this warning.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>109 Hooker Furnishings 2026-09-11
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Friday, Sept. 11, 2026 at 8:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>110 MoneyHero 2026-09-11
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026, at 5:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>111 Copart 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 5:00 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>112 Zumiez 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 5:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>113 Descartes 2026-09-10
+114 LightPath 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 5 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>115 Adobe 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 4:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>116 Champions Oncology 2026-09-10
+117 Frequency Electronics 2026-09-10
+118 Oracle 2026-09-10
+119 RH 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 9:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>120 Shoe Station 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 8:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>121 MasterCraft 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 8 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>122 1-800-FLOWERS 2026-09-10
+123 Designer Brands 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 8:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>124 Yuanbao 2026-09-10
+125 Vince 2026-09-10
+126 IBEX 2026-09-10
+127 Lovesac 2026-09-10
+128 Macy&#x27;s 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 10, 2026 at 10:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>129 Tsakos Energy Navigation 2026-09-10
+130 Alliance Entertainment 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026, at 4:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>131 Limoneira 2026-09-09
+132 Lesaka 2026-09-10
+133 Culp 2026-09-10
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, September 9, 2026 at 5:00 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>134 Cooper 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Sept. 9, 2026 at 4:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>135 AeroVironment 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 5 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>136 Gloo 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 5:00 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>137 Navan 2026-09-09
+138 Wealthfront 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 4:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>139 American Eagle 2026-09-09
+140 Lakeland 2026-09-09
+141 RSSS Q4 2026 Earnings Call Transcript 2026-09-09
+142 Academy Sports 2026-09-10
+143 Skillsoft 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 8:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>144 Cognyte 2026-09-09
+145 Oddity Tech 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 8:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>146 J.Jill 2026-09-09
+147 Perma-Pipe 2026-09-09
+148 Nano-X Imaging 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 10:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>149 Caleres 2026-09-09
+150 Core &amp; Main 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 12 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>151 Korn Ferry 2026-09-09
+152 Signet 2026-09-09
+153 Sunbelt Rentals 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 9:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>154 Destination XL 2026-09-09
+155 SailPoint 2026-09-09
+156 Chewy 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 9, 2026 at 11 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>157 Optical Cable 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Wednesday, Sept. 2, 2026, at 5 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>158 Netskope 2026-09-02
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 8, 2026 at 8:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>159 Canaan 2026-09-08
+160 Gamehaus 2026-09-08
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 8, 2026 at 4:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>161 Braze 2026-09-08
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 8, 2026 at 5:00 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>162 InnovAge 2026-09-08
+163 Casey&#x27;s 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Sept. 8, 2026 at 5 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>164 Mission Produce 2026-09-08
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 8, 2026 at 8:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>165 ABM 2026-09-08
+166 UNFI 2026-09-08
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 8, 2026 at 9:00 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+/tmp/ipykernel_2276/904308454.py:16: UserWarning: Parsing dates in %A, Sept. %d, %Y at %m:%M p.m. ET format when dayfirst=False (the default) was specified. Pass `dayfirst=True` or specify a format to silence this warning.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>167 17 Education 2026-09-08
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Tuesday, Sept. 8, 2026 at 5 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>168 ServiceTitan 2026-09-08
+169 MIND 2026-09-09
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 9:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>170 VersaBank 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Friday, Sept. 4, 2026 at 8:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>171 U.S. Global Investors 2026-09-04
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 10:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>172 Wiley 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 4:30 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>173 Mama&#x27;s Creations 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 8:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>174 Brady 2026-09-03
+175 Torrid 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 8:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>176 Zegna 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 9 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+/tmp/ipykernel_2276/904308454.py:16: UserWarning: Parsing dates in %A, Sept. %d, %Y at %m a.m. ET format when dayfirst=False (the default) was specified. Pass `dayfirst=True` or specify a format to silence this warning.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>177 BRP 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Friday, Sept. 4, 2026 at 9:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>178 KNOT 2026-09-04
+179 Oxford Industries 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 5:00 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>180 eGain 2026-09-03
+181 Lands&#x27; End 2026-09-03
+182 Concrete Pumping 2026-09-03
+183 Smith &amp; Wesson 2026-09-03
+184 DocuSign 2026-09-03
+185 VS&amp;Co 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 7:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>186 Hello Group 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Friday, Sept. 4, 2026, at 11:00 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>187 Quanex 2026-09-04
+188 Genesco 2026-09-03
+189 Planet Labs 2026-09-03
+190 Asana 2026-09-03
+191 Guidewire 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 11 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>192 Toro 2026-09-03
+193 Ambarella 2026-09-03
+194 Lululemon 2026-09-03
+195 Amber 2026-09-03
+196 Ciena 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 9:30 a.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>197 Duluth Holdings 2026-09-03
+198 UiPath 2026-09-03
+</pre><pre>/tmp/ipykernel_2276/904308454.py:16: FutureWarning: Parsed string &quot;Thursday, Sept. 3, 2026 at 5 p.m. ET&quot; included an un-recognized timezone &quot;ET&quot;. Dropping unrecognized timezones is deprecated; in a future version this will raise. Instead pass the string without the timezone, then use .tz_localize to convert to a recognized timezone.
+  callDate = pd.to_datetime(dateText).date().isoformat()
+</pre><pre>199 American Outdoor Brands 2026-09-03
+200 Zscaler 2026-09-03
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 14</div><pre><code># save DFs
+df1 = pd.DataFrame(callRows)
+df2 = pd.DataFrame(speakerRows)
+
+df1.to_csv(downloadDir / &quot;DF1.csv&quot;, index=False)
+df2.to_csv(downloadDir / &quot;DF2.csv&quot;, index=False)</code></pre></section><section class="cell"><div class="notebook-label">Cell 15</div><pre><code>df1.head()</code></pre><details class="cell-output"><summary>Saved output</summary><pre>   EarningsCallID     CompanyName    CallDate  \
+0               1        Fastenal  2026-10-14   
+1               2       BlackRock  2026-10-14   
+2               3  Morgan Stanley  2026-10-14   
+3               4        Sono-Tek  2026-10-14   
+4               5            ASML  2026-10-14   
+
+                                    EarningsCallText  
+0  Operator: Greetings. Welcome to Fastenal&#x27;s 202...  
+1  Operator: Good morning. My name is Jen, and I ...  
+2  Operator: Thank you for joining the Morgan Sta...  
+3  Operator: Good day, everyone, and welcome to t...  
+4  Operator: Good day, and thank you for standing...  </pre></details></section><section class="cell"><div class="notebook-label">Cell 16</div><pre><code>df2.head()</code></pre><details class="cell-output"><summary>Saved output</summary><pre>   SpeakerTurnID  EarningsCallID     SpeakerName PreparedOrQA  \
+0              1               1        Operator     Prepared   
+1              2               1  Dray Schreiber     Prepared   
+2              3               1   Jeffery Watts     Prepared   
+3              4               1  Max Tunnicliff     Prepared   
+4              5               1   Jeffery Watts     Prepared   
+
+                                                Text  
+0  Greetings. Welcome to Fastenal&#x27;s 2026 Third Qu...  
+1  Welcome to the Fastenal Company 2026 Third Qua...  
+2  Thank you, Dray. Good morning, everyone, and w...  
+3  Thank you, Jeff, and good morning, everyone. O...  
+4  Thanks, Max. Before we open the line, I think ...  </pre></details></section><section class="cell"><div class="notebook-label">Cell 17</div><pre><code>print(&quot;Calls:&quot;, len(df1))
+print(&quot;Speaker turns:&quot;, len(df2))</code></pre><details class="cell-output"><summary>Saved output</summary><pre>Calls: 200
+Speaker turns: 8796
+</pre></details></section><section class="cell"><div class="notebook-label">Cell 18</div><pre><code># Different Q&amp;A introductions require inspection.
+if needsReview:
+  print(&quot;Q&amp;A boundary not detected; review these calls:&quot;)
+  for callID, url in needsReview:
+    print(callID, url)</code></pre><details class="cell-output"><summary>Saved output</summary><pre>Q&amp;A boundary not detected; review these calls:
+17 https://www.fool.com/earnings/call-transcripts/2026/10/13/leifras-lfs-q2-2026-earnings-call-transcript/
+20 https://www.fool.com/earnings/call-transcripts/2026/10/09/oil-dri-odc-q4-2026-earnings-call-transcript/
+23 https://www.fool.com/earnings/call-transcripts/2026/10/08/novagold-ng-q3-2026-earnings-call-transcript/
+40 https://www.fool.com/earnings/call-transcripts/2026/10/02/yiren-digital-yrd-q2-2026-earnings-call-transcript/
+53 https://www.fool.com/earnings/call-transcripts/2026/09/30/moving-image-mitq-q4-2026-earnings-call-transcript/
+74 https://www.fool.com/earnings/call-transcripts/2026/09/24/atlasclear-atch-q4-2026-earnings-call-transcript/
+77 https://www.fool.com/earnings/call-transcripts/2026/09/24/paychex-payx-q1-2027-earnings-call-transcript/
+92 https://www.fool.com/earnings/call-transcripts/2026/09/16/ispire-ispr-q4-2026-earnings-call-transcript/
+96 https://www.fool.com/earnings/call-transcripts/2026/09/15/51talk-coe-q2-2026-earnings-call-transcript/
+97 https://www.fool.com/earnings/call-transcripts/2026/09/15/rent-the-runway-rent-q2-2026-earnings-call-transcript/
+98 https://www.fool.com/earnings/call-transcripts/2026/09/15/abat-q4-2026-earnings-call-transcript/
+99 https://www.fool.com/earnings/call-transcripts/2026/09/15/bioceres-biox-q4-2026-earnings-call-transcript/
+104 https://www.fool.com/earnings/call-transcripts/2026/09/14/hain-celestial-hain-q1-2027-earnings-call-transcript/
+107 https://www.fool.com/earnings/call-transcripts/2026/09/14/coinshares-cshr-q2-2026-earnings-call-transcript/
+110 https://www.fool.com/earnings/call-transcripts/2026/09/11/moneyhero-mny-q2-2026-earnings-call-transcript/
+116 https://www.fool.com/earnings/call-transcripts/2026/09/11/champions-oncology-csbr-q1-2027-earnings-call-transcript/
+157 https://www.fool.com/earnings/call-transcripts/2026/09/09/optical-cable-occ-q3-2026-earnings-call-transcript/
+167 https://www.fool.com/earnings/call-transcripts/2026/09/09/17-education-yq-q2-2026-earnings-call-transcript/
+171 https://www.fool.com/earnings/call-transcripts/2026/09/09/us-global-investors-grow-q4-2026-earnings-call-transcript/
+191 https://www.fool.com/earnings/call-transcripts/2026/09/09/guidewire-gwre-q4-2026-earnings-call-transcript/
+195 https://www.fool.com/earnings/call-transcripts/2026/09/09/amber-ambr-q2-2026-earnings-call-transcript/
+196 https://www.fool.com/earnings/call-transcripts/2026/09/09/ciena-cien-q3-2026-earnings-call-transcript/
+</pre></details></section><section class="cell markdown-cell"><p>Per checking, among the 22 non-detected Q&amp;A, six have no Q&amp;A appearing in the published transcript, four have question period opening, but no audience questions follow. For the other 12, our rule is too narrow to catch them.</p>
+</section>
+</main>
+<footer><div class="shell footer-inner"><span>Lanqing Jia · Fall 2026 Text Mining</span><a href="#main">Back to top ↑</a></div></footer>
+</body></html>
