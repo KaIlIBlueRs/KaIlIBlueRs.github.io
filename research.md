@@ -12,17 +12,11 @@ slug: /work
 </ul>
 <p>I am especially interested in analytical and game-theoretic modeling, alongside statistical and machine-learning methods for measuring consumer preferences and evaluating AI-assisted market research.</p>
 
-<h5> Publications</h5>
-<article aria-label="QUOIN publication">
+<h5> Preprints</h5>
+<article aria-label="QUOIN preprint">
   <p>
-    <strong><a href="https://openreview.net/forum?id=27r3IyL9HA">QUOIN: A Quantized Universal Observational Inference Network for Real-Time Transient Classification and Redshift Estimation</a></strong><br />
-    <a href="https://openreview.net/profile?id=~Ruiyao_Xu1">Ruiyao Xu</a>,
-    <strong><a href="https://openreview.net/profile?id=~Lanqing_Jia1">Lanqing Jia</a></strong>,
-    <a href="https://openreview.net/profile?id=~Amanda_R._Wasserman1">Amanda R. Wasserman</a>,
-    <a href="https://openreview.net/profile?id=~Gautham_Narayan1">Gautham Narayan</a>, and
-    <a href="https://openreview.net/profile?id=~Noelle_I._Samia1">Noelle I. Samia</a>.<br />
-    <em>Submitted to AAAI 2027.</em> 2026.
+    <strong>QUOIN: A Quantized Universal Observational Inference Network for Real-Time Transient Classification and Redshift Estimation</strong><br />
+    Ruiyao Xu, <strong>Lanqing Jia</strong>, Amanda R. Wasserman, Gautham Narayan, and Noelle I. Samia.
   </p>
-  <p>A three-tier encoder combining selective state-space modeling, dynamic patching, and a bidirectional transformer for joint supernova subtype classification and redshift estimation.</p>
-  <p><a href="{{ '/assets/papers/quoin.pdf' | relative_url }}">Download PDF</a> &middot; <a href="https://openreview.net/forum?id=27r3IyL9HA">OpenReview</a></p>
+  <p><a href="{{ '/assets/papers/quoin.pdf' | relative_url }}">Download PDF</a></p>
 </article>
