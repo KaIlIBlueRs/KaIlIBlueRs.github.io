@@ -1,94 +1,64 @@
 (function () {
+  'use strict';
   const dataEl = document.getElementById('travel-data');
   if (!dataEl) return;
+  const places = JSON.parse(dataEl.textContent);
+  const baseurl = document.currentScript.dataset.baseurl || '';
+  const filters = document.querySelector('.travel-filters');
+  const cards = Array.from(document.querySelectorAll('.travel-card'));
+  const results = document.getElementById('travel-results');
+  let map;
+  let markers;
 
-  let cities = [];
-  try {
-    cities = JSON.parse(dataEl.textContent);
-  } catch (e) {
-    console.error('travel-map: failed to parse data', e);
-    return;
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
   }
-
-  const map = L.map('travel-map', {
-    worldCopyJump: true,
-    scrollWheelZoom: true,
-  }).setView([20, 0], 2);
-
+  function popup(place) {
+    let html = '<div class="travel-popup"><h3>' + escapeHtml(place.city) + '</h3><p>' + escapeHtml(place.country) + '</p>';
+    if (place.kind) html += '<p>' + escapeHtml(place.kind) + '</p>';
+    if (place.notes) html += '<p>' + escapeHtml(place.notes) + '</p>';
+    if (place.photos && place.photos.length) {
+      html += '<a href="' + escapeHtml(baseurl + place.url) + '"><img src="' + escapeHtml(baseurl + place.cover) + '" alt="' + escapeHtml(place.city) + '" loading="lazy">View ' + place.photos.length + ' photographs &rarr;</a>';
+    }
+    return html + '</div>';
+  }
+  function updateMap(filter) {
+    if (!map) return;
+    markers.clearLayers();
+    const visible = places.filter(function (place) {
+      return (filter === 'all' || place.region === filter) && Number.isFinite(place.lat) && Number.isFinite(place.lng);
+    });
+    visible.forEach(function (place) {
+      L.marker([place.lat, place.lng]).bindPopup(popup(place), { maxWidth: 250 }).addTo(markers);
+    });
+    if (visible.length) map.fitBounds(L.latLngBounds(visible.map(function (place) { return [place.lat, place.lng]; })).pad(0.15), { maxZoom: 6 });
+  }
+  // Album browsing works even if the external map library cannot load.
+  filters.hidden = false;
+  filters.addEventListener('click', function (event) {
+    const button = event.target.closest('button[data-filter]');
+    if (!button) return;
+    const filter = button.dataset.filter;
+    filters.querySelectorAll('button').forEach(function (item) { item.setAttribute('aria-pressed', String(item === button)); });
+    let count = 0;
+    cards.forEach(function (card) {
+      card.hidden = filter !== 'all' && card.dataset.region !== filter;
+      if (!card.hidden) count += 1;
+    });
+    results.textContent = count + ' albums';
+    updateMap(filter);
+  });
+  if (!window.L) return;
+  document.querySelector('.travel-map-fallback').remove();
+  map = L.map('travel-map', { worldCopyJump: true, scrollWheelZoom: false }).setView([20, 0], 2);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 18
   }).addTo(map);
-
-  const cluster = L.markerClusterGroup({
-    showCoverageOnHover: false,
-    spiderfyOnMaxZoom: true,
-    maxClusterRadius: 40,
-  });
-
-  function escapeHtml(str) {
-    if (str == null) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  function buildPopup(c) {
-    let html = '<div class="travel-popup" style="font-family: \'Palatino Linotype\', Palatino, Georgia, serif;">';
-    html += '<h4 style="margin: 0 0 6px; font-size: 16px; color: #00356b; font-family: \'Futura\', sans-serif;">'
-      + escapeHtml(c.city)
-      + (c.country ? ', ' + escapeHtml(c.country) : '')
-      + '</h4>';
-
-    if (c.date) {
-      html += '<p style="margin: 0 0 6px; color: #888; font-size: 12px;">'
-        + escapeHtml(c.date) + '</p>';
-    }
-
-    if (c.notes) {
-      html += '<p style="margin: 0 0 8px; font-size: 13px; line-height: 1.4;">'
-        + escapeHtml(c.notes) + '</p>';
-    }
-
-    if (c.photos && c.photos.length) {
-      const cols = c.photos.length === 1 ? 1 : 2;
-      html += '<div class="travel-photos" style="display: grid; grid-template-columns: repeat('
-        + cols + ', 1fr); gap: 6px; max-width: 260px;">';
-
-      c.photos.forEach(function (p) {
-        const src = escapeHtml(p.src);
-        const caption = escapeHtml(p.caption || '');
-        html += '<a href="' + src + '" target="_blank" rel="noopener" title="' + caption + '">';
-        html += '<img src="' + src + '" alt="' + caption
-          + '" style="width: 100%; height: 90px; object-fit: cover; border-radius: 4px; display: block;" />';
-        html += '</a>';
-      });
-
-      html += '</div>';
-    } else {
-      html += '<p style="margin: 0; font-size: 12px; color: #aaa; font-style: italic;">Photos coming soon.</p>';
-    }
-
-    html += '</div>';
-    return html;
-  }
-
-  cities.forEach(function (c) {
-    if (typeof c.lat !== 'number' || typeof c.lng !== 'number') return;
-    const marker = L.marker([c.lat, c.lng]);
-    marker.bindPopup(buildPopup(c), { maxWidth: 280 });
-    cluster.addLayer(marker);
-  });
-
-  map.addLayer(cluster);
-
-  if (cities.length > 1) {
-    const bounds = L.latLngBounds(cities.map(function (c) { return [c.lat, c.lng]; }));
-    map.fitBounds(bounds.pad(0.3));
-  } else if (cities.length === 1) {
-    map.setView([cities[0].lat, cities[0].lng], 5);
-  }
+  markers = typeof L.markerClusterGroup === 'function'
+    ? L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true, maxClusterRadius: 35 })
+    : L.layerGroup();
+  map.addLayer(markers);
+  updateMap('all');
 })();

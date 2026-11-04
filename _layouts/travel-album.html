@@ -1,0 +1,35 @@
+---
+layout: default
+---
+{% assign place = site.data.travel | where: 'id', page.destination | first %}
+<link rel="stylesheet" href="{{ '/assets/css/travel.css' | relative_url }}" />
+<div class="travel-page">
+  <nav class="travel-breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ '/travel/' | relative_url }}">&larr; All travel</a>
+    {% if place.region == 'us-parks' %}<span aria-hidden="true">/</span><a href="{{ '/travel/us-national-parks/' | relative_url }}">US National Park series</a>{% endif %}
+  </nav>
+  <header class="travel-intro">
+    <p class="travel-eyebrow">{{ place.country }}{% if place.kind != '' %} &middot; {{ place.kind }}{% endif %}</p>
+    <h1>{{ place.city }}</h1>
+    <p class="travel-meta">{{ place.photos.size }} photographs <span aria-hidden="true">&middot;</span> Select a photo to view it full size.</p>
+  </header>
+  <div class="travel-gallery">
+    {% for photo in place.photos %}
+    <a class="travel-photo" href="{{ photo.src | relative_url }}" data-caption="{{ photo.caption | escape }}" aria-label="View {{ photo.caption | escape }}">
+      <img src="{{ photo.thumb | relative_url }}" alt="{{ photo.caption | escape }}" width="{{ photo.width }}" height="{{ photo.height }}" loading="{% if forloop.index <= 3 %}eager{% else %}lazy{% endif %}" decoding="async" />
+    </a>
+    {% endfor %}
+  </div>
+  <p class="travel-album-end"><a href="{{ '/travel/#destinations' | relative_url }}">Explore more destinations &rarr;</a></p>
+</div>
+<dialog class="travel-lightbox" aria-label="Photo viewer">
+  <div class="travel-lightbox-toolbar"><p id="photo-position" aria-live="polite"></p><button type="button" class="travel-close" aria-label="Close photo viewer">Close &times;</button></div>
+  <div class="travel-lightbox-stage">
+    <button type="button" class="travel-previous" aria-label="Previous photo">&larr;</button>
+    <img id="lightbox-image" alt="" />
+    <button type="button" class="travel-next" aria-label="Next photo">&rarr;</button>
+  </div>
+  <p id="photo-caption"></p>
+  <p class="travel-lightbox-hint">Use the arrow keys to browse &middot; Esc to close</p>
+</dialog>
+<script src="{{ '/assets/js/travel-gallery.js' | relative_url }}"></script>

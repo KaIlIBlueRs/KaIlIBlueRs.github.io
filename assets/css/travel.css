@@ -1,0 +1,77 @@
+.travel-page { --travel-blue: #00356b; --travel-muted: #666; }
+.travel-page h1 { font-size: clamp(32px, 5vw, 44px); line-height: 1.2; margin-bottom: 14px; }
+.travel-page h2 { font-size: 23px; line-height: 1.35; }
+.travel-intro { margin-bottom: 30px; }
+.travel-eyebrow { font: 11px/1.6 Futura, "Trebuchet MS", sans-serif; letter-spacing: .11em; text-transform: uppercase; color: var(--travel-muted); margin-bottom: 8px; }
+.travel-meta, .travel-muted { color: var(--travel-muted); font-size: 14px; }
+.travel-meta span { margin: 0 8px; }
+.travel-feature { position: relative; display: block; border-radius: 6px; overflow: hidden; color: white; margin-bottom: 42px; background: #203b46; }
+.travel-feature > img { width: 100%; height: 330px; object-fit: cover; display: block; }
+.travel-feature::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,18,33,.88), rgba(0,18,33,.14) 85%); }
+.travel-feature-copy { position: absolute; bottom: 28px; left: 30px; right: 24px; z-index: 1; }
+.travel-feature-copy .travel-eyebrow { color: #fff; }
+.travel-feature-copy h2 { font-size: clamp(24px, 4vw, 32px); margin-bottom: 8px; }
+.travel-feature-copy p { margin-bottom: 12px; }
+.travel-feature-link { font: 13px/1.5 Futura, "Trebuchet MS", sans-serif; border-bottom: 1px solid #ffffff80; padding-bottom: 3px; }
+.travel-feature:hover { color: white; text-decoration: none; }
+.travel-feature:hover .travel-feature-link { border-color: white; }
+.travel-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.travel-section-heading h2 { margin-bottom: 8px; }
+.travel-section-heading a { font-size: 14px; }
+.travel-map-section { margin-bottom: 40px; }
+#travel-map { height: 370px; width: 100%; border: 1px solid #ddd; border-radius: 6px; z-index: 0; background: #edf1f3; box-sizing: border-box; }
+.travel-map-fallback { padding: 24px; color: #555; }
+.travel-popup { font-family: Georgia, serif; }
+.travel-popup h3 { color: #00356b; font-size: 17px; margin: 0 0 5px; }
+.travel-popup p { margin: 6px 0; }
+.travel-popup img { width: 220px; height: 145px; object-fit: cover; border-radius: 3px; display: block; margin: 10px 0; }
+.travel-popup a { color: #00356b; }
+.travel-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 15px; }
+.travel-filters[hidden], .travel-card[hidden] { display: none; }
+.travel-filters button { border: 1px solid #d2d9e0; border-radius: 4px; padding: 9px 13px; background: transparent; color: #00356b; font: 13px/1.5 Futura, "Trebuchet MS", sans-serif; cursor: pointer; }
+.travel-filters button[aria-pressed="true"] { background: #00356b; color: white; border-color: #00356b; }
+.travel-page a:focus-visible, .travel-page button:focus-visible, .travel-lightbox button:focus-visible { outline: 3px solid #b97927; outline-offset: 4px; }
+.travel-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 20px; }
+.travel-card { display: block; color: inherit; min-width: 0; }
+.travel-card:hover { text-decoration: none; color: inherit; }
+.travel-card-image { overflow: hidden; border-radius: 4px; background: #e6eaed; }
+.travel-card-image img { display: block; width: 100%; aspect-ratio: 4 / 3; height: auto; object-fit: cover; transition: transform .2s ease; }
+.travel-card:hover img { transform: scale(1.035); }
+.travel-card-copy { padding-top: 12px; }
+.travel-card-copy .travel-eyebrow { font-size: 10px; letter-spacing: .07em; margin-bottom: 5px; }
+.travel-card h3 { color: #00356b; font-size: 18px; line-height: 1.35; margin-bottom: 5px; }
+.travel-card .travel-muted { margin-bottom: 0; font-size: 13px; }
+.travel-card .travel-muted span { float: right; color: #00356b; }
+.travel-breadcrumb { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 25px; font-size: 14px; }
+.travel-back { display: inline-block; margin-bottom: 25px; font-size: 14px; }
+.travel-heading-count { color: #777; font-size: 16px; margin-left: 6px; }
+.travel-nearby { margin-top: 42px; }
+.travel-gallery { columns: 3; column-gap: 16px; }
+.travel-photo { display: block; margin-bottom: 16px; break-inside: avoid; background: #eef0f2; border-radius: 3px; overflow: hidden; }
+.travel-photo img { display: block; width: 100%; height: auto; }
+.travel-album-end { margin: 35px 0 15px; padding-top: 25px; border-top: 1px solid #e5e5e5; }
+.travel-lightbox { box-sizing: border-box; width: 100vw; height: 100dvh; max-width: none; max-height: none; padding: 18px 24px; border: 0; margin: 0; background: #11171c; color: #fff; }
+.travel-lightbox::backdrop { background: #11171c; }
+.travel-lightbox[open] { display: flex; flex-direction: column; }
+.travel-lightbox-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 15px; }
+.travel-lightbox-toolbar p { margin: 0; font-size: 14px; }
+.travel-lightbox button { color: white; border: 1px solid #ffffff55; border-radius: 4px; background: #ffffff10; cursor: pointer; min-width: 44px; min-height: 44px; font: 16px/1.5 Futura, sans-serif; }
+.travel-close { padding: 7px 14px; }
+.travel-lightbox-stage { flex: 1; min-height: 0; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 15px; margin: 16px 0; }
+#lightbox-image { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+#photo-caption { margin: 0; text-align: center; font-size: 14px; }
+.travel-lightbox-hint { text-align: center; font-size: 12px; color: #bac2c8; margin: 5px 0 0; }
+body.travel-viewing { overflow: hidden; }
+@media (max-width: 650px) {
+  .travel-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
+  .travel-gallery { columns: 2; column-gap: 12px; }
+  .travel-photo { margin-bottom: 12px; }
+  .travel-feature > img { height: 300px; }
+  .travel-feature-copy { bottom: 22px; left: 20px; }
+  #travel-map { height: 310px; }
+  .travel-lightbox { padding: 12px; }
+  .travel-lightbox-stage { gap: 5px; grid-template-columns: 36px minmax(0, 1fr) 36px; }
+  .travel-lightbox-stage button { min-width: 36px; }
+}
+@media (max-width: 360px) { .travel-cards { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .travel-card-image img { transition: none; } }

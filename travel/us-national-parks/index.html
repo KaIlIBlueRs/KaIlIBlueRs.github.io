@@ -1,0 +1,26 @@
+---
+layout: default
+title: US National Park series
+---
+<link rel="stylesheet" href="{{ '/assets/css/travel.css' | relative_url }}" />
+<div class="travel-page">
+  <a class="travel-back" href="{{ '/travel/' | relative_url }}">&larr; All travel</a>
+  <header class="travel-intro">
+    <p class="travel-eyebrow">A continuing collection</p>
+    <h1>US National Park series</h1>
+    <p>Photographs from the national parks I've visited, and a few stops along the way.</p>
+  </header>
+  {% assign series = site.data.travel | where: 'region', 'us-parks' %}
+  {% assign parks = series | where: 'kind', 'National park' %}
+  <h2>National parks <span class="travel-heading-count">{{ parks.size }}</span></h2>
+  <div class="travel-cards">
+    {% for place in parks %}{% include travel-card.html place=place %}{% endfor %}
+  </div>
+  <section class="travel-nearby">
+    <h2>Along the way</h2>
+    <p class="travel-muted">Antelope Canyon, Monument Valley, and Hanksville: nearby stops from these trips, listed separately from the national parks.</p>
+    <div class="travel-cards">
+      {% for place in series %}{% unless place.kind == 'National park' %}{% include travel-card.html place=place %}{% endunless %}{% endfor %}
+    </div>
+  </section>
+</div>

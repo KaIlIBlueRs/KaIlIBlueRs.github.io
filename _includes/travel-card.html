@@ -1,0 +1,8 @@
+<a class="travel-card" href="{{ include.place.url | relative_url }}" data-region="{{ include.place.region }}">
+  <div class="travel-card-image"><img src="{{ include.place.cover | relative_url }}" alt="{{ include.place.city | escape }}, {{ include.place.country | escape }}" loading="lazy" decoding="async" width="640" height="480" /></div>
+  <div class="travel-card-copy">
+    <p class="travel-eyebrow">{{ include.place.country }}{% if include.place.kind != '' %} &middot; {{ include.place.kind }}{% endif %}</p>
+    <h3>{{ include.place.city }}</h3>
+    <p class="travel-muted">{{ include.place.photos.size }} photographs <span aria-hidden="true">&rarr;</span></p>
+  </div>
+</a>

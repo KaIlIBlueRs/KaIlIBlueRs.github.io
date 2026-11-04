@@ -27,23 +27,11 @@ bundle exec jekyll serve  # start dev server at http://127.0.0.1:4000
 - `_data/travel.yml` — list of cities + photos for the Travel map
 - `_config.yml` — site title, URL, and nav links
 
-## Adding a travel city
+## Updating travel photos
 
-Add an entry to `_data/travel.yml`:
+Travel lives at `/travel/`; the original `/travel.html` URL redirects there. Destination albums, the US National Park series, and the map use `_data/travel.yml`.
 
-```yaml
-- city: Paris
-  country: France
-  lat: 48.8566
-  lng: 2.3522
-  date: "2025-08"
-  notes: Optional one-line description.
-  photos:
-    - src: /assets/img/travel/paris/eiffel.jpg
-      caption: Eiffel Tower at sunset
-```
-
-Drop the photos in `assets/img/travel/<city>/`. Coordinates: search the city on Google Maps, right-click, and the first menu item gives `lat, lng`.
+The photo importer generates optimized full-size JPEGs, thumbnails, and album pages from the curated `World photos` folder. See [_tools/travel/README.md](_tools/travel/README.md) for the import command, destination metadata, and cover selections. The original photos are never modified.
 
 ## Original theme
 
