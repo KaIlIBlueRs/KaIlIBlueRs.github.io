@@ -14,7 +14,7 @@ Prior to that, I obtained my M.S. in Statistics and Data Science from <a href="h
 <p>
 <b>Research Interests:</b>
 
-To be updated as I begin my Ph.D. journey. If you'd like to chat, feel free to reach out. :-)
+Quantitative marketing, digital platforms, and the economics of AI, with interests in AI agents and market design, content markets, and consumer decision-making in livestream commerce. <a href="{{ '/research.html' | relative_url }}">More about my research interests</a>. If you'd like to chat, feel free to reach out. :-)
 </p>
 
 <p>

@@ -12,7 +12,6 @@ permalink: /travel/
 
 <div class="travel-page">
   <header class="travel-intro">
-    <p class="travel-eyebrow">A photo journal</p>
     <p>Places I've been and moments from along the way.</p>
     {% assign albums = site.data.travel | where_exp: 'place', 'place.photos.size > 0' %}
   </header>
@@ -31,7 +30,8 @@ permalink: /travel/
   </a>
 
   <section class="travel-map-section" aria-labelledby="map-heading">
-    <div class="travel-section-heading"><h5 id="map-heading">On the Map</h5><a href="#destinations">Browse the albums &darr;</a></div>
+    <h5 id="map-heading">On the Map</h5>
+    <p class="travel-muted"><a href="#destinations">Browse the albums &darr;</a></p>
     <p class="travel-muted">Choose a marker to open an album. Markers show approximate destination locations.</p>
     <div id="travel-map" aria-label="Map of travel destinations"><p class="travel-map-fallback">Explore every photo album below. The interactive map loads when available.</p></div>
   </section>

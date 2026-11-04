@@ -15,7 +15,6 @@
 .travel-feature-link { font: 13px/1.5 Futura, "Trebuchet MS", sans-serif; border-bottom: 1px solid #ffffff80; padding-bottom: 3px; }
 .travel-feature:hover { color: white; text-decoration: none; }
 .travel-feature:hover .travel-feature-link { border-color: white; }
-.travel-section-heading a { display: inline-block; margin-bottom: 8px; font-size: 14px; }
 .travel-map-section { margin-bottom: 40px; }
 #travel-map { height: 370px; width: 100%; border: 1px solid #ddd; border-radius: 6px; z-index: 0; background: #edf1f3; box-sizing: border-box; }
 .travel-map-fallback { padding: 24px; color: #555; }
