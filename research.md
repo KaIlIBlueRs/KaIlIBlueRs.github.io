@@ -3,7 +3,7 @@ layout: default
 title: Research
 slug: /work
 ---
-<h5> Research Interests</h5>
+<h5 class="page-opening"> Research Interests</h5>
 <p>My research interests lie in quantitative marketing, with a focus on digital platforms, consumer decision-making, and the economics of artificial intelligence. I am interested in how information and incentives shape interactions among consumers, firms, and AI agents.</p>
 <ul>
   <li><strong>AI and market design:</strong> How AI agents change consumer search, recommendations, negotiation, and competition, and how market rules can align their incentives with those of consumers and firms.</li>

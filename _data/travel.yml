@@ -2915,6 +2915,75 @@
     ]
   },
   {
+    "id": "usa-puerto-rico",
+    "city": "Puerto Rico",
+    "country": "USA",
+    "region": "americas",
+    "lat": 18.22,
+    "lng": -66.59,
+    "kind": "",
+    "url": "/travel/usa-puerto-rico/",
+    "cover": "/assets/img/travel/usa-puerto-rico/thumbs/079a6114-e0ced6.jpg",
+    "photos": [
+      {
+        "src": "/assets/img/travel/usa-puerto-rico/079a6085-1ad015.jpg",
+        "thumb": "/assets/img/travel/usa-puerto-rico/thumbs/079a6085-1ad015.jpg",
+        "caption": "Puerto Rico, USA · Photo 1",
+        "width": 994,
+        "height": 558,
+        "source": "079A6085.jpg"
+      },
+      {
+        "src": "/assets/img/travel/usa-puerto-rico/079a6090-4dbfa8.jpg",
+        "thumb": "/assets/img/travel/usa-puerto-rico/thumbs/079a6090-4dbfa8.jpg",
+        "caption": "Puerto Rico, USA · Photo 2",
+        "width": 1920,
+        "height": 1078,
+        "source": "079A6090.jpg"
+      },
+      {
+        "src": "/assets/img/travel/usa-puerto-rico/079a6097-2558ee.jpg",
+        "thumb": "/assets/img/travel/usa-puerto-rico/thumbs/079a6097-2558ee.jpg",
+        "caption": "Puerto Rico, USA · Photo 3",
+        "width": 1920,
+        "height": 1078,
+        "source": "079A6097.jpg"
+      },
+      {
+        "src": "/assets/img/travel/usa-puerto-rico/079a6114-e0ced6.jpg",
+        "thumb": "/assets/img/travel/usa-puerto-rico/thumbs/079a6114-e0ced6.jpg",
+        "caption": "Puerto Rico, USA · Photo 4",
+        "width": 1920,
+        "height": 1077,
+        "source": "079A6114.jpg"
+      },
+      {
+        "src": "/assets/img/travel/usa-puerto-rico/079a6129-eb3dbd.jpg",
+        "thumb": "/assets/img/travel/usa-puerto-rico/thumbs/079a6129-eb3dbd.jpg",
+        "caption": "Puerto Rico, USA · Photo 5",
+        "width": 1590,
+        "height": 893,
+        "source": "079A6129.jpg"
+      },
+      {
+        "src": "/assets/img/travel/usa-puerto-rico/079a6164-6bb3c0.jpg",
+        "thumb": "/assets/img/travel/usa-puerto-rico/thumbs/079a6164-6bb3c0.jpg",
+        "caption": "Puerto Rico, USA · Photo 6",
+        "width": 1920,
+        "height": 1078,
+        "source": "079A6164.jpg"
+      },
+      {
+        "src": "/assets/img/travel/usa-puerto-rico/079a6176-c2f17f.jpg",
+        "thumb": "/assets/img/travel/usa-puerto-rico/thumbs/079a6176-c2f17f.jpg",
+        "caption": "Puerto Rico, USA · Photo 7",
+        "width": 1920,
+        "height": 1078,
+        "source": "079A6176.jpg"
+      }
+    ]
+  },
+  {
     "id": "usa-antelope-canyon",
     "city": "Antelope Canyon",
     "country": "USA",

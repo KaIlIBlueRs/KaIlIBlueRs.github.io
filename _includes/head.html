@@ -60,7 +60,7 @@
     <meta property="twitter:site" content="{{ twitter_username }}"/>
   {% endif %}
 
-  <link rel="stylesheet" href="{{ "/assets/css/main.css" | absolute_url }}"/>
+  <link rel="stylesheet" href="{{ "/assets/css/main.css" | absolute_url }}?v={{ site.time | date: "%s" }}"/>
   <link rel="canonical" href="{{ page_url }}"/>
   <link rel="shortcut icon" href="{{ "/favicon.ico" | absolute_url }}" type="image/x-icon"/>
   <link rel="icon" href="{{ "/favicon.ico" | absolute_url }}" type="image/x-icon"/>

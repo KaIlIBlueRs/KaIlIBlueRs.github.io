@@ -11,7 +11,7 @@ permalink: /travel/
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
 <div class="travel-page">
-  <header class="travel-intro">
+  <header class="travel-intro page-opening">
     <p>Places I've been and moments from along the way.</p>
     {% assign albums = site.data.travel | where_exp: 'place', 'place.photos.size > 0' %}
   </header>
@@ -41,7 +41,7 @@ permalink: /travel/
     <div class="travel-filters" aria-label="Filter destinations" hidden>
       <button type="button" data-filter="all" aria-pressed="true">All destinations</button>
       <button type="button" data-filter="us-parks" aria-pressed="false">US National Park series</button>
-      <button type="button" data-filter="americas" aria-pressed="false">Latin America</button>
+      <button type="button" data-filter="americas" aria-pressed="false">Latin America &amp; Caribbean</button>
       <button type="button" data-filter="europe" aria-pressed="false">Europe</button>
     </div>
     <div class="travel-cards">

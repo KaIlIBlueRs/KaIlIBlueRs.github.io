@@ -22,6 +22,7 @@
   ["Italy, Tuscany", "Tuscany", "Italy", "europe", 43.38, 11.00],
   ["Mexico, Mexico City", "Mexico City", "Mexico", "americas", 19.43, -99.13],
   ["Peru, Lima", "Lima", "Peru", "americas", -12.05, -77.04],
+  ["USA, Puerto Rico", "Puerto Rico", "USA", "americas", 18.22, -66.59],
   ["US National Park series/Antelope Canyon", "Antelope Canyon", "USA", "us-parks", 36.86, -111.37, "Navajo Nation · Nearby stop"],
   ["US National Park series/Arches", "Arches", "USA", "us-parks", 38.73, -109.59, "National park"],
   ["US National Park series/Bryce Canyon", "Bryce Canyon", "USA", "us-parks", 37.59, -112.19, "National park"],
