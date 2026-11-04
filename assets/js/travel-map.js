@@ -6,7 +6,6 @@
   const baseurl = document.currentScript.dataset.baseurl || '';
   const filters = document.querySelector('.travel-filters');
   const cards = Array.from(document.querySelectorAll('.travel-card'));
-  const results = document.getElementById('travel-results');
   let map;
   let markers;
 
@@ -42,12 +41,9 @@
     if (!button) return;
     const filter = button.dataset.filter;
     filters.querySelectorAll('button').forEach(function (item) { item.setAttribute('aria-pressed', String(item === button)); });
-    let count = 0;
     cards.forEach(function (card) {
       card.hidden = filter !== 'all' && card.dataset.region !== filter;
-      if (!card.hidden) count += 1;
     });
-    results.textContent = count + ' albums';
     updateMap(filter);
   });
   if (!window.L) return;

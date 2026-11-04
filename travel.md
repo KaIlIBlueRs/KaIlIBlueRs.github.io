@@ -13,12 +13,8 @@ permalink: /travel/
 <div class="travel-page">
   <header class="travel-intro">
     <p class="travel-eyebrow">A photo journal</p>
-    <h1>Travel</h1>
     <p>Places I've been and moments from along the way.</p>
     {% assign albums = site.data.travel | where_exp: 'place', 'place.photos.size > 0' %}
-    {% assign photo_count = 0 %}
-    {% for place in albums %}{% assign photo_count = photo_count | plus: place.photos.size %}{% endfor %}
-    <p class="travel-meta">{{ albums.size }} destinations <span aria-hidden="true">&middot;</span> {{ photo_count }} photographs</p>
   </header>
 
   {% assign parks = albums | where: 'region', 'us-parks' %}
@@ -35,20 +31,19 @@ permalink: /travel/
   </a>
 
   <section class="travel-map-section" aria-labelledby="map-heading">
-    <div class="travel-section-heading"><h2 id="map-heading">On the map</h2><a href="#destinations">Browse the albums &darr;</a></div>
+    <div class="travel-section-heading"><h5 id="map-heading">On the Map</h5><a href="#destinations">Browse the albums &darr;</a></div>
     <p class="travel-muted">Choose a marker to open an album. Markers show approximate destination locations.</p>
     <div id="travel-map" aria-label="Map of travel destinations"><p class="travel-map-fallback">Explore every photo album below. The interactive map loads when available.</p></div>
   </section>
 
   <section id="destinations" aria-labelledby="destinations-heading">
-    <h2 id="destinations-heading">The albums</h2>
+    <h5 id="destinations-heading">The Albums</h5>
     <div class="travel-filters" aria-label="Filter destinations" hidden>
       <button type="button" data-filter="all" aria-pressed="true">All destinations</button>
       <button type="button" data-filter="us-parks" aria-pressed="false">US National Park series</button>
       <button type="button" data-filter="americas" aria-pressed="false">Latin America</button>
       <button type="button" data-filter="europe" aria-pressed="false">Europe</button>
     </div>
-    <p id="travel-results" class="travel-muted" aria-live="polite">{{ albums.size }} albums</p>
     <div class="travel-cards">
       {% for place in albums %}{% include travel-card.html place=place %}{% endfor %}
     </div>
