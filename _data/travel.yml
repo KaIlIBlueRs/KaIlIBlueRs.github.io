@@ -3729,10 +3729,10 @@
     ]
   },
   {
-    "city": "New Brunswick",
+    "city": "Newark",
     "country": "USA",
-    "lat": 40.4862,
-    "lng": -74.4518,
+    "lat": 40.7357,
+    "lng": -74.1724,
     "date": "2026-09",
     "notes": "My new home for the next few years.",
     "photos": []
@@ -3753,6 +3753,10 @@
     "lng": -72.9279,
     "date": "2026",
     "notes": "Visiting my partner at Yale.",
-    "photos": []
+    "photos": [],
+    "notes_link": {
+      "text": "my partner",
+      "url": "https://jlianghe.github.io/"
+    }
   }
 ]

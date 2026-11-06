@@ -17,7 +17,14 @@
   function popup(place) {
     let html = '<div class="travel-popup"><h3>' + escapeHtml(place.city) + '</h3><p>' + escapeHtml(place.country) + '</p>';
     if (place.kind) html += '<p>' + escapeHtml(place.kind) + '</p>';
-    if (place.notes) html += '<p>' + escapeHtml(place.notes) + '</p>';
+    if (place.notes) {
+      let notes = escapeHtml(place.notes);
+      const link = place.notes_link;
+      if (link && link.text && /^https:\/\//.test(link.url)) {
+        notes = notes.replace(escapeHtml(link.text), '<a href="' + escapeHtml(link.url) + '">' + escapeHtml(link.text) + '</a>');
+      }
+      html += '<p>' + notes + '</p>';
+    }
     if (place.photos && place.photos.length) {
       html += '<a href="' + escapeHtml(baseurl + place.url) + '"><img src="' + escapeHtml(baseurl + place.cover) + '" alt="' + escapeHtml(place.city) + '" loading="lazy">View ' + place.photos.length + ' photographs &rarr;</a>';
     }

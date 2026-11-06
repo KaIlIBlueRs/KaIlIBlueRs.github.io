@@ -89,9 +89,9 @@ def import_photos(source):
         print(f'{city}: {len(photos)} photos', flush=True)
     # Retain the original personal map locations, without inventing new photo albums.
     destinations.extend([
-        {'city': 'New Brunswick', 'country': 'USA', 'lat': 40.4862, 'lng': -74.4518, 'date': '2026-09', 'notes': 'My new home for the next few years.', 'photos': []},
+        {'city': 'Newark', 'country': 'USA', 'lat': 40.7357, 'lng': -74.1724, 'date': '2026-09', 'notes': 'My new home for the next few years.', 'photos': []},
         {'city': 'Shanghai', 'country': 'China', 'lat': 31.2304, 'lng': 121.4737, 'date': '2022-2026', 'notes': 'Where I spent my undergrad years at Fudan.', 'photos': []},
-        {'city': 'New Haven', 'country': 'USA', 'lat': 41.3083, 'lng': -72.9279, 'date': '2026', 'notes': 'Visiting my partner at Yale.', 'photos': []}
+        {'city': 'New Haven', 'country': 'USA', 'lat': 41.3083, 'lng': -72.9279, 'date': '2026', 'notes': 'Visiting my partner at Yale.', 'notes_link': {'text': 'my partner', 'url': 'https://jlianghe.github.io/'}, 'photos': []}
     ])
     # JSON is valid YAML, retaining the site's existing data filename and Liquid key.
     (ROOT / '_data/travel.yml').write_text(json.dumps(destinations, ensure_ascii=False, indent=2) + '\n')
