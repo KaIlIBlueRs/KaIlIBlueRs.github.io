@@ -18,8 +18,14 @@ do not depend on this module. Normal navigation links point back to those pages.
 
 ## Content and provenance
 
-- Eight projects from Weeks 1–7 and 9. Only `Lanqing` or `Lanqing Jia`
+- Nine projects from Weeks 1–7, 9 and 11. Only `Lanqing` or `Lanqing Jia`
   subfolders were imported, plus explicitly selected shared resources.
+- Week 11 (Whisker Watch) is a Next.js web app, not a notebook. Its source was
+  copied into `weeks/week-11/` directly rather than through `import_course.py`,
+  so it has no inventory entries. The live app runs on Vercel, built from that
+  folder. The API key lives only in Vercel's environment variables, and
+  practice audio and `.env.local` are gitignored. GitHub Pages shows the
+  folder's README as the project write-up.
 - All eight slide decks are excluded, including the three PDF slide decks.
 - Week 8 contains only slides. Weeks 9 and 10 have shared course files, but
   only Week 9 has project work in Lanqing's supplied folders.
@@ -76,3 +82,11 @@ before rebuilding. Importing never executes notebooks or loads pickle objects.
 It uses a strict author-folder filter and a small shared-file allowlist. The
 underscored authoring files and tools are ignored by Jekyll; they remain available
 in the repository. Serving the existing generated HTML needs no generator.
+
+## Rebuilding the index
+
+`python3 projects/_tools/build.py` rebuilds the index and every notebook reader;
+it needs Ruby/Bundler for Kramdown. To change only the project cards, run
+`python3 projects/_tools/build.py --index-only`, which needs no Ruby. Projects
+come from `_catalog.json`. An entry without a `notebook` gets a card with its
+`demo`, `links` and `resources` but no notebook reader.

@@ -193,5 +193,42 @@
       ]
     ],
     "note": "The interactive demo includes its trained model and works entirely in the browser. The notebook needs corpus.json to retrain or reevaluate; that file was not supplied. The demo’s embedded source samples are not the complete training corpus."
+  },
+  {
+    "week": "11",
+    "title": "Whisker Watch: a real-time earnings call monitor",
+    "description": "A web app that replays an earnings call at real speed, with captions that scroll like song lyrics, and flags non-answers, deflection, hedging, long pauses and vocal shifts as they happen. Each pattern triggers its own cat meme beside the evidence, and every flag can be marked fair or a misfire. Its non-answer judge agreed with my own labels on 43 of 49 analyst questions.",
+    "tags": [
+      "Real-time audio",
+      "LLM judge",
+      "Interactive demo"
+    ],
+    "demo": "https://kailibluers-github-io.vercel.app/",
+    "demo_label": "Open the live app ↗",
+    "links": [
+      [
+        "weeks/week-11/",
+        "Read the write-up →"
+      ],
+      [
+        "https://github.com/KaIlIBlueRs/KaIlIBlueRs.github.io/tree/main/projects/weeks/week-11",
+        "View source ↗"
+      ]
+    ],
+    "resources": [
+      [
+        "weeks/week-11/validation/CMG_FY2025Q3_exchanges.csv",
+        "Hand-labelled validation · Chipotle Q3 2025 · CSV"
+      ],
+      [
+        "weeks/week-11/validation/FISV_FY2026Q3_exchanges.csv",
+        "Hand-labelled validation · Fiserv Q3 2026 · CSV"
+      ],
+      [
+        "weeks/week-11/validation/AAPL_FY2026Q4_exchanges.csv",
+        "Hand-labelled validation · Apple FY26 Q4 · CSV"
+      ]
+    ],
+    "note": "A Next.js app deployed on Vercel. Speech-to-text and the non-answer judge run on the server with an OpenAI key that never reaches the browser; the live app asks for an access code before any paid call. Pitch, pauses and pace are measured in the browser. The practice-call audio is not included (large and copyrighted). To run it yourself: npm install, put OPENAI_API_KEY in .env.local, then npm run dev. Without a key it still replays pasted transcripts with a rules-only judge."
   }
 ]

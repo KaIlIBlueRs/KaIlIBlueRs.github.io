@@ -3,6 +3,10 @@
 Run from the repository root using its existing Ruby/Bundler environment:
   PATH=/opt/homebrew/opt/ruby/bin:$PATH python3 projects/_tools/build.py
 Only this authoring step uses Kramdown. Published pages need no build or JS.
+
+  python3 projects/_tools/build.py --index-only
+rebuilds just the Projects index (no Ruby needed; notebook readers are left as they are).
+Projects without a "notebook" (e.g. a deployed web app) get a card but no notebook reader.
 """
 import base64
 from html import escape
@@ -10,10 +14,12 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parents[1]
 catalog = json.loads((ROOT / '_catalog.json').read_text())
+INDEX_ONLY = '--index-only' in sys.argv[1:]
 
 
 def url(path):
@@ -62,6 +68,8 @@ def resources(project):
 notebooks = []
 markdown = []
 for project in catalog:
+    if INDEX_ONLY or not project.get('notebook'):
+        continue
     folder = ROOT / 'weeks' / f'week-{project["week"]}'
     notebook = json.loads((folder / project['notebook']).read_text())
     notebooks.append((project, folder, notebook))
@@ -69,9 +77,10 @@ for project in catalog:
 
 # Reuse Jekyll's already installed markdown engine rather than adding dependencies.
 ruby = 'require "json"; require "kramdown"; print JSON.generate(JSON.parse(STDIN.read).map { |s| Kramdown::Document.new(s, syntax_highlighter: nil).to_html })'
-result = subprocess.run(['bundle', 'exec', 'ruby', '-e', ruby], input=json.dumps(markdown), text=True,
-                        capture_output=True, check=True, cwd=ROOT.parent)
-rendered = iter(json.loads(result.stdout))
+if notebooks:
+    result = subprocess.run(['bundle', 'exec', 'ruby', '-e', ruby], input=json.dumps(markdown), text=True,
+                            capture_output=True, check=True, cwd=ROOT.parent)
+    rendered = iter(json.loads(result.stdout))
 
 for project, folder, notebook in notebooks:
     cells = []
@@ -108,9 +117,16 @@ cards = []
 for project in catalog:
     week = project['week']
     path = f'weeks/week-{week}/'
-    actions = f'<a href="{path}notebook.html">Read notebook →</a><a href="{url(path + project["notebook"])}" download>Download .ipynb</a>'
+    actions = ''
+    if project.get('notebook'):
+        actions = f'<a href="{path}notebook.html">Read notebook →</a><a href="{url(path + project["notebook"])}" download>Download .ipynb</a>'
+    for href, label in project.get('links', []):
+        external = href.startswith('http')
+        actions += f'<a href="{escape(href)}"' + (' target="_blank" rel="noopener"' if external else '') + f'>{escape(label)}</a>'
     if project.get('demo'):
-        actions = f'<a href="{project["demo"]}">Open interactive demo →</a>' + actions
+        external = project['demo'].startswith('http')
+        label = escape(project.get('demo_label', 'Open interactive demo →'))
+        actions = f'<a href="{escape(project["demo"])}"' + (' target="_blank" rel="noopener"' if external else '') + f'>{label}</a>' + actions
     tags = ''.join(f'<span class="tag">{escape(tag)}</span>' for tag in project['tags'])
     cards.append(f'''<article class="project" id="week-{week}" aria-labelledby="title-{week}">
 <div class="week">Week<strong>{week}</strong></div>
@@ -121,7 +137,7 @@ navigation = ''.join(f'<a href="#week-{p["week"]}">Week {p["week"]}</a>' for p i
 content = f'''<p class="eyebrow">Coursework / Fall 2026</p>
 <h1>Projects</h1>
 <p class="intro">Exploring how code turns text into evidence. A collection of my Text Mining coursework, from Python fundamentals to financial language and explainable classification.</p>
-<div class="overview"><span><strong>8</strong> weekly projects</span><span><strong>8</strong> readable notebooks</span><span><strong>1</strong> interactive demo</span></div>
+<div class="overview"><span><strong>{len(catalog)}</strong> weekly projects</span><span><strong>{sum(1 for p in catalog if p.get('notebook'))}</strong> readable notebooks</span><span><strong>{sum(1 for p in catalog if p.get('demo'))}</strong> interactive demo{'s' if sum(1 for p in catalog if p.get('demo')) != 1 else ''}</span></div>
 <section class="featured" aria-labelledby="featured-title">
 <div><p class="eyebrow">Featured / Week 09</p><h2 id="featured-title">Remarks Lab</h2>
 <p>Prepared statement or answer to a question? Explore the words behind an earnings-call classifier’s decision.</p>
@@ -134,4 +150,4 @@ content = f'''<p class="eyebrow">Coursework / Fall 2026</p>
 </section>
 <p class="course-note">Projects are organized by their submission folders; assignment briefs may come from the preceding week. Week 8 contained presentation slides only. No project files were supplied in my folders for Week 10. Presentation slides are omitted throughout.</p>'''
 (ROOT / 'index.html').write_text(document('Projects', content))
-print(f'Built Projects index and {len(notebooks)} notebook readers.')
+print(f'Built Projects index and {len(notebooks)} notebook readers.' + (' (index only)' if INDEX_ONLY else ''))
