@@ -99,6 +99,19 @@ never applies. Transcriptions are cached in the browser (IndexedDB), so replayin
   non-answer precision/recall and a confusion matrix.
 - In the app, every flag has 👍 fair / 👎 misfire and a note. The summary shows your agreement rate per pattern and
   exports Markdown/JSON. Votes are remembered per file, so a rerun keeps them.
+- **Results.** I hand-labelled all 49 analyst questions across the three practice calls, then compared:
+
+  | Judge | Agrees with my label |
+  |---|---|
+  | LLM judge (what the app uses) | **43/49 (88%)** |
+  | Rules-only judge (no API) | 17/49 (35%) |
+
+  - **All 6 disagreements are the same kind:** the tool said *answered* where I said *partial*. The judge leans
+    lenient: it never called an answer evasive that I thought was fine.
+  - **Non-answers:** it caught both of the ones I found, with no false alarms. That is only 2 cases, so it is a
+    small sample.
+  - **What the rules miss:** the rules-only judge cannot tell a real explanation from on-topic filler, which is why
+    the app uses the LLM judge with the rules as a fallback.
 - `npm run replay -- <audio> <start> <length> [speed]` runs the full audio pipeline headless and prints speakers,
   exchanges, verdicts and events. I used it to tune thresholds.
 
