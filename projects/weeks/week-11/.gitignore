@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets
+.env
+.env*.local
+
+# practice calls (copyrighted audio, large) — kept local only
+samples/
+
+.DS_Store
+.replay-cache/
+
+# course handout (not ours to republish)
+earnings-call-monitor-assignment.md.txt
