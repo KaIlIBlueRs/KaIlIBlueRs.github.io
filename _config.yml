@@ -14,8 +14,6 @@ header:
       slug: /
     - name: Research
     - name: Travel
-    - name: Projects
-      slug: /projects/
 
 footer:
   show_powered_by: true
